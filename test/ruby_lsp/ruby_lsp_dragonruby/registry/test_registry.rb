@@ -47,6 +47,16 @@ module RubyLsp
         end
       end
 
+      def test_validate_logs_issues_to_logger
+        io = StringIO.new
+        logger = Logger.new(io)
+        with_data({"metadata.yml" => METADATA, "types.yml" => "types:\n  - members: []\n"}) do |dir|
+          assert_raises(Registry::InvalidDataError) { Registry.validate!(data_dir: dir, logger: logger) }
+        end
+
+        assert_includes io.string, "missing required field `name`"
+      end
+
       def test_validate_returns_warnings
         type_yaml = <<~YAML
           types:

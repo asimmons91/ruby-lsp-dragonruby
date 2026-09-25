@@ -35,6 +35,14 @@ module RubyLsp
             types: [GTK::Inputs, GTK::Keyboard]
       YAML
 
+      COVERAGE_INHERITED_ONLY = <<~YAML
+        areas:
+          - id: inputs_only
+            title: Inputs
+            docs: "https://example.com"
+            types: [GTK::Inputs]
+      YAML
+
       def test_reports_covered_and_missing_areas
         files = valid_files.merge("coverage.yml" => COVERAGE)
         with_registry(files) do |registry, dir|
@@ -45,7 +53,7 @@ module RubyLsp
           assert coverage.areas[1].covered?
           refute coverage.areas[2].covered?
           assert_equal ["GTK::Missing"], coverage.areas[2].missing_types
-          assert_equal 4, coverage.areas[1].member_count
+          assert_equal 5, coverage.areas[1].member_count
           assert_equal [coverage.areas[2]], coverage.incomplete
         end
       end
@@ -64,6 +72,16 @@ module RubyLsp
         files = valid_files.merge("coverage.yml" => COVERAGE_OK)
         with_registry(files) do |registry, dir|
           assert Registry::Coverage.call(registry, data_dir: dir).covered?
+        end
+      end
+
+      def test_area_with_only_inherited_members_is_covered
+        files = valid_files.merge("coverage.yml" => COVERAGE_INHERITED_ONLY)
+        with_registry(files) do |registry, dir|
+          area = Registry::Coverage.call(registry, data_dir: dir).areas.first
+          assert area.covered?
+          assert_empty area.missing_types
+          assert_equal 2, area.member_count
         end
       end
     end
