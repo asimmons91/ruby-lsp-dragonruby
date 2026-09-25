@@ -1,0 +1,8 @@
+module RubyLsp
+  module Dragonruby
+    VERSION: String
+
+    class Error < StandardError
+    end
+  end
+end

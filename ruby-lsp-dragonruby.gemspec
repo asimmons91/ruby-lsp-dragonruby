@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/ruby/lsp/dragonruby/version"
+require_relative "lib/ruby_lsp_dragonruby/version"
 
 Gem::Specification.new do |spec|
   spec.name = "ruby-lsp-dragonruby"
-  spec.version = Ruby::Lsp::Dragonruby::VERSION
+  spec.version = RubyLsp::Dragonruby::VERSION
   spec.authors = ["Austin Simmons"]
   spec.email = ["austin_simmons@fastmail.com"]
 
