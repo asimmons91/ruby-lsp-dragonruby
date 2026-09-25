@@ -7,9 +7,9 @@ module RubyLsp
     # Resolves an expression to a DragonRuby type by walking chains left to
     # right through registry member returns.
     class Resolver
-      def initialize(registry, roots: nil)
+      def initialize(registry, roots: nil, index: nil)
         @registry = registry
-        @roots = roots || Roots.new(registry)
+        @roots = roots || Roots.new(registry, index: index)
       end
 
       def resolve(node, context = nil)
@@ -35,7 +35,11 @@ module RubyLsp
       end
 
       def resolve_call(node, context)
-        return resolve_root(node, context) unless node.receiver
+        if node.receiver.nil? || node.receiver.is_a?(Prism::SelfNode)
+          type = @roots.resolve(node, context)
+          return Resolution.of_type(type) if type
+          return Resolution.unknown if node.receiver.nil?
+        end
 
         receiver = resolve(node.receiver, context)
         return Resolution.unknown unless receiver.resolved_type?

@@ -63,13 +63,48 @@ module RubyLsp
         assert_predicate registry.type("GTK::Entity"), :open?
       end
 
-      def test_primitive_schemas_are_placeholders
+      def test_primitive_schemas_are_curated
         %w[sprite label solid border line].each do |name|
           schema = registry.schema(name)
           refute_nil schema, "missing schema #{name}"
           assert_equal name, schema.primitive_marker
-          assert_empty schema.keys
+          refute_empty schema.keys, "schema #{name} has no keys"
         end
+
+        screenshot = registry.schema("screenshot")
+        refute_nil screenshot
+        assert_includes screenshot.keys.map(&:name), "path"
+      end
+
+      def test_output_collections_link_primitive_schemas
+        {
+          "GTK::Outputs::Sprites" => ["sprite"],
+          "GTK::Outputs::Labels" => ["label"],
+          "GTK::Outputs::Solids" => ["solid"],
+          "GTK::Outputs::Borders" => ["border"],
+          "GTK::Outputs::Lines" => ["line"],
+          "GTK::Outputs::Screenshots" => ["screenshot"]
+        }.each do |type_name, schema_names|
+          assert_equal schema_names, registry.type(type_name).accepts_primitive, type_name
+        end
+
+        assert_equal %w[sprite label solid border line],
+          registry.type("GTK::Outputs::Primitives").accepts_primitive
+      end
+
+      def test_macros_are_curated
+        macro = registry.macro("attr_gtk")
+        refute_nil macro
+        assert_equal ["attr_dr"], macro.aliases
+
+        %w[args state inputs outputs grid geometry gtk layout audio easing events runtime passes].each do |name|
+          assert macro.accessor?(name), "attr_gtk is missing accessor #{name}"
+        end
+
+        sprite = registry.macro("attr_sprite")
+        refute_nil sprite
+        assert_equal "sprite", sprite.primitive
+        assert_equal registry.schema("sprite").keys.map(&:name), sprite.accessors.map(&:name)
       end
 
       def test_registry_loads_under_100ms

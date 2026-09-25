@@ -64,23 +64,24 @@ types:
         doc: "Returns the primitive at the given index."
         params: [{name: index, kind: required, type: Integer}]
 
-  - {name: GTK::Outputs::Sprites, parent: GTK::Outputs::Collection, doc: "Collection of sprite primitives."}
-  - {name: GTK::Outputs::Labels, parent: GTK::Outputs::Collection, doc: "Collection of label primitives."}
-  - {name: GTK::Outputs::Solids, parent: GTK::Outputs::Collection, doc: "Collection of solid primitives."}
-  - {name: GTK::Outputs::Borders, parent: GTK::Outputs::Collection, doc: "Collection of border primitives."}
-  - {name: GTK::Outputs::Lines, parent: GTK::Outputs::Collection, doc: "Collection of line primitives."}
-  - {name: GTK::Outputs::Primitives, parent: GTK::Outputs::Collection, doc: "Collection that accepts every kind of primitive."}
-  - {name: GTK::Outputs::StaticSprites, parent: GTK::Outputs::Collection, doc: "Static collection of sprite primitives."}
-  - {name: GTK::Outputs::StaticLabels, parent: GTK::Outputs::Collection, doc: "Static collection of label primitives."}
-  - {name: GTK::Outputs::StaticSolids, parent: GTK::Outputs::Collection, doc: "Static collection of solid primitives."}
-  - {name: GTK::Outputs::StaticBorders, parent: GTK::Outputs::Collection, doc: "Static collection of border primitives."}
-  - {name: GTK::Outputs::StaticLines, parent: GTK::Outputs::Collection, doc: "Static collection of line primitives."}
-  - {name: GTK::Outputs::StaticPrimitives, parent: GTK::Outputs::Collection, doc: "Static collection that accepts every kind of primitive."}
-  - {name: GTK::Outputs::Screenshots, parent: GTK::Outputs::Collection, doc: "Collection of screenshot requests."}
+  - {name: GTK::Outputs::Sprites, parent: GTK::Outputs::Collection, accepts_primitive: sprite, doc: "Collection of sprite primitives."}
+  - {name: GTK::Outputs::Labels, parent: GTK::Outputs::Collection, accepts_primitive: label, doc: "Collection of label primitives."}
+  - {name: GTK::Outputs::Solids, parent: GTK::Outputs::Collection, accepts_primitive: solid, doc: "Collection of solid primitives."}
+  - {name: GTK::Outputs::Borders, parent: GTK::Outputs::Collection, accepts_primitive: border, doc: "Collection of border primitives."}
+  - {name: GTK::Outputs::Lines, parent: GTK::Outputs::Collection, accepts_primitive: line, doc: "Collection of line primitives."}
+  - {name: GTK::Outputs::Primitives, parent: GTK::Outputs::Collection, accepts_primitive: [sprite, label, solid, border, line], doc: "Collection that accepts every kind of primitive."}
+  - {name: GTK::Outputs::StaticSprites, parent: GTK::Outputs::Collection, accepts_primitive: sprite, doc: "Static collection of sprite primitives."}
+  - {name: GTK::Outputs::StaticLabels, parent: GTK::Outputs::Collection, accepts_primitive: label, doc: "Static collection of label primitives."}
+  - {name: GTK::Outputs::StaticSolids, parent: GTK::Outputs::Collection, accepts_primitive: solid, doc: "Static collection of solid primitives."}
+  - {name: GTK::Outputs::StaticBorders, parent: GTK::Outputs::Collection, accepts_primitive: border, doc: "Static collection of border primitives."}
+  - {name: GTK::Outputs::StaticLines, parent: GTK::Outputs::Collection, accepts_primitive: line, doc: "Static collection of line primitives."}
+  - {name: GTK::Outputs::StaticPrimitives, parent: GTK::Outputs::Collection, accepts_primitive: [sprite, label, solid, border, line], doc: "Static collection that accepts every kind of primitive."}
+  - {name: GTK::Outputs::Screenshots, parent: GTK::Outputs::Collection, accepts_primitive: screenshot, doc: "Collection of screenshot requests."}
   - {name: GTK::Outputs::Sounds, parent: GTK::Outputs::Collection, doc: "Collection of one-time sound requests."}
 
   - name: GTK::Outputs::Debug
     parent: GTK::Outputs::Collection
+    accepts_primitive: [sprite, label, solid, border, line]
     doc: "Debug primitives and strings rendered above everything, and skipped in production builds."
     members:
       - name: watch
@@ -94,6 +95,7 @@ types:
 
   - name: GTK::Outputs::RenderTarget
     parent: GTK::Outputs::Collection
+    accepts_primitive: [sprite, label, solid, border, line]
     doc: "An off-screen canvas that caches primitives until it is rendered to."
     members:
       - {name: w, kind: attribute, returns: Numeric, doc: "Width of the render target."}

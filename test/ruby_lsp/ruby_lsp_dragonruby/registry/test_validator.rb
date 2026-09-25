@@ -191,7 +191,103 @@ module RubyLsp
                 - {name: push, kind: method, returns: GTK::Sprites, doc: Push}
         YAML
         registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml, "schemas.yml" => SCHEMAS})
-        assert_equal "sprite", registry.type("GTK::Sprites").accepts_primitive
+        assert_equal ["sprite"], registry.type("GTK::Sprites").accepts_primitive
+      end
+
+      def test_accepts_primitive_list_resolves
+        type_yaml = <<~YAML
+          types:
+            - name: GTK::Sprites
+              accepts_primitive: [sprite, solid]
+              members:
+                - {name: push, kind: method, returns: GTK::Sprites, doc: Push}
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml, "schemas.yml" => SCHEMAS})
+        assert_equal %w[sprite solid], registry.type("GTK::Sprites").accepts_primitive
+      end
+
+      def test_accepts_primitive_list_with_one_dangling_entry_is_cleared
+        type_yaml = <<~YAML
+          types:
+            - name: GTK::Sprites
+              accepts_primitive: [sprite, nope]
+              members:
+                - {name: push, kind: method, returns: GTK::Sprites, doc: Push}
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml, "schemas.yml" => SCHEMAS})
+        assert_nil registry.type("GTK::Sprites").accepts_primitive
+        assert_includes error_messages(issues_for(type_yaml, schemas: SCHEMAS)), "dangling accepts_primitive reference `nope`"
+      end
+
+      def test_macros_are_validated_and_built
+        macros = <<~YAML
+          macros:
+            - name: attr_gtk
+              aliases: [attr_dr]
+              accessors:
+                - {name: inputs, returns: GTK::Inputs, doc: Inputs}
+                - {name: missing, returns: GTK::Nope, doc: Bad}
+        YAML
+        registry = load_registry(valid_files.merge("macros.yml" => macros))
+        macro = registry.macro("attr_gtk")
+        assert_equal ["attr_dr"], macro.aliases
+        assert_equal ["inputs"], macro.accessors.map(&:name)
+        assert_equal "<!-- dragonruby:attr_gtk -->", macro.comment_tag
+
+        issues = validation_issues({"metadata.yml" => METADATA, "types.yml" => TYPES, "names.yml" => NAMES, "schemas.yml" => SCHEMAS, "macros.yml" => macros})
+        assert_includes error_messages(issues), "unresolved type `GTK::Nope`"
+      end
+
+      def test_primitive_backed_macro_expands_schema_keys
+        registry = load_registry(valid_files)
+        macro = registry.macro("attr_sprite")
+
+        assert_equal "sprite", macro.primitive
+        assert_equal ["w", "blend_mode_enum"], macro.accessors.map(&:name)
+        assert_equal ["Numeric"], macro.accessor("w").returns.names
+      end
+
+      def test_dangling_macro_primitive_is_rejected
+        macros = <<~YAML
+          macros:
+            - name: attr_sprite
+              primitive: nope
+        YAML
+        issues = validation_issues({"metadata.yml" => METADATA, "macros.yml" => macros})
+        assert_includes error_messages(issues), "dangling primitive reference `nope`"
+      end
+
+      def test_primitive_backed_macro_cannot_declare_accessors
+        macros = <<~YAML
+          macros:
+            - name: attr_sprite
+              primitive: sprite
+              accessors:
+                - {name: w, returns: Numeric, doc: Width}
+        YAML
+        issues = validation_issues({"metadata.yml" => METADATA, "schemas.yml" => SCHEMAS, "macros.yml" => macros})
+        assert_includes error_messages(issues), "primitive-backed macro cannot declare accessors"
+      end
+
+      def test_duplicate_macro_accessor_names_drop_second
+        macros = <<~YAML
+          macros:
+            - name: attr_gtk
+              accessors:
+                - {name: inputs, returns: GTK::Inputs, doc: One}
+                - {name: inputs, returns: GTK::Inputs, doc: Two}
+        YAML
+        issues = validation_issues({"metadata.yml" => METADATA, "macros.yml" => macros})
+        assert_includes error_messages(issues), "duplicate accessor name `inputs`"
+      end
+
+      def test_macro_requires_accessors
+        macros = <<~YAML
+          macros:
+            - name: attr_gtk
+        YAML
+        issues = validation_issues({"metadata.yml" => METADATA, "macros.yml" => macros})
+        assert_includes error_messages(issues), "missing required field `accessors`"
       end
 
       def test_dangling_name_list_reference

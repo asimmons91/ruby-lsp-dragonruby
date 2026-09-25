@@ -4,7 +4,7 @@
 
 `ruby-lsp-dragonruby` is a Ruby LSP add-on gem (runs on CRuby inside the LSP server, never inside DragonRuby) for hover/completion/go-to-definition on DragonRuby's `args` API, plus undefined-API warnings.
 
-`docs/requirements_v1.md` is the authoritative spec — read it before implementing. It defines milestones M0–M8, per-requirement IDs (`REQ-*`), and explicit non-goals. M1 (the curated API registry under `data/`, plus loader/validator/coverage tooling) and M2 (receiver resolution, args-tree completion and hover) are implemented. M0-S1 and M0-S2 are decided in `docs/decisions/`; M0-S3–S6 remain open. Prefer milestone order for new work.
+`docs/requirements_v1.md` is the authoritative spec — read it before implementing. It defines milestones M0–M8, per-requirement IDs (`REQ-*`), and explicit non-goals. M1 (the curated API registry under `data/`, plus loader/validator/coverage tooling), M2 (receiver resolution, args-tree completion and hover), and M3 (primitive hash keys, `attr_sprite`/`attr_gtk` indexing enhancements) are implemented. M0-S1 and M0-S2 are decided in `docs/decisions/`; M0-S3–S6 remain open. Prefer milestone order for new work.
 
 ## Commands
 
@@ -25,3 +25,5 @@ Lint is **standardrb, not RuboCop**. The requirements text mentions RuboCop in a
 - Integration tests must use Ruby LSP's `with_server` helper and cover incomplete code: trailing `.`, unclosed hash, half-typed identifier (REQ-TEST-01/02).
 - CI runs Ruby 4.0 and 3.4, while the gemspec allows `>= 3.2` and `.standard.yml` targets 3.2. The low/high `ruby-lsp` version matrix (REQ-TEST-03) is not wired up yet.
 - Registry data is YAML under `data/` and is loaded once at activation (REQ-M1-01, REQ-PERF-01). The format, family expansion, and load-time skip semantics are documented in `docs/decisions/m1-registry-format.md`; curate with `rake registry:coverage` in view.
+- M3 added `data/macros.yml` and list-valued `accepts_primitive`; the format and the `ruby-lsp` 0.26-specific `RubyIndexer::Enhancement` approach are documented in `docs/decisions/m3-macros-and-primitives.md`.
+- Add-on completion and hover listeners do not receive the cursor position in the pinned `ruby-lsp` range. Primitive key vs. value positions are inferred from AST shape (`lib/ruby_lsp_dragonruby/primitive_context.rb`); trailing whitespace never reaches add-on listeners.

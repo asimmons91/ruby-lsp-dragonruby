@@ -1,16 +1,120 @@
 schemas:
   - name: sprite
     primitive_marker: sprite
-    keys: []
+    keys:
+      - {name: x, type: Numeric, doc: "X position. The bottom-left corner is used for positioning unless anchor_x changes it."}
+      - {name: y, type: Numeric, doc: "Y position measured from the bottom-left corner of the screen."}
+      - {name: w, type: Numeric, doc: "Render width."}
+      - {name: h, type: Numeric, doc: "Render height."}
+      - {name: path, type: [String, Symbol], doc: "Path to the sprite file relative to the game folder, or a symbol for a solid, render target, or cached sprite."}
+      - {name: flip_horizontally, type: Boolean, doc: "Flips the sprite horizontally.", default: false}
+      - {name: flip_vertically, type: Boolean, doc: "Flips the sprite vertically.", default: false}
+      - {name: anchor_x, type: Numeric, doc: "Positioning anchor on the X axis relative to the render width. 0.5 centers.", default: 0}
+      - {name: anchor_y, type: Numeric, doc: "Positioning anchor on the Y axis relative to the render height. 0.5 centers.", default: 0}
+      - {name: angle, type: Numeric, doc: "Rotation in degrees around the center or the angle anchors.", default: 0}
+      - {name: angle_anchor_x, type: Numeric, doc: "Rotation anchor on the X axis relative to the render width.", default: 0.5}
+      - {name: angle_anchor_y, type: Numeric, doc: "Rotation anchor on the Y axis relative to the render height.", default: 0.5}
+      - {name: tile_x, type: Numeric, doc: "Crop X within the sprite sheet, measured from the top-left origin.", default: 0}
+      - {name: tile_y, type: Numeric, doc: "Crop Y within the sprite sheet, measured from the top-left origin.", default: 0}
+      - {name: tile_w, type: Numeric, doc: "Crop width within the sprite sheet.", default: 0}
+      - {name: tile_h, type: Numeric, doc: "Crop height within the sprite sheet.", default: 0}
+      - {name: source_x, type: Numeric, doc: "Crop X within the source, measured from the bottom-left origin.", default: 0}
+      - {name: source_y, type: Numeric, doc: "Crop Y within the source, measured from the bottom-left origin.", default: 0}
+      - {name: source_w, type: Numeric, doc: "Crop width within the source.", default: 0}
+      - {name: source_h, type: Numeric, doc: "Crop height within the source.", default: 0}
+      - {name: x2, type: Numeric, doc: "Second triangle vertex X. Use with y2, x3, and y3 instead of w and h."}
+      - {name: y2, type: Numeric, doc: "Second triangle vertex Y."}
+      - {name: x3, type: Numeric, doc: "Third triangle vertex X."}
+      - {name: y3, type: Numeric, doc: "Third triangle vertex Y."}
+      - {name: source_x2, type: Numeric, doc: "Second source triangle vertex X."}
+      - {name: source_y2, type: Numeric, doc: "Second source triangle vertex Y."}
+      - {name: source_x3, type: Numeric, doc: "Third source triangle vertex X."}
+      - {name: source_y3, type: Numeric, doc: "Third source triangle vertex Y."}
+      - {name: r, type: Numeric, doc: "Red tint from 0 to 255.", default: 255}
+      - {name: g, type: Numeric, doc: "Green tint from 0 to 255.", default: 255}
+      - {name: b, type: Numeric, doc: "Blue tint from 0 to 255.", default: 255}
+      - {name: a, type: Numeric, doc: "Alpha from 0 to 255.", default: 255}
+      - {name: blendmode_enum, type: Integer, doc: "Deprecated blend mode: 0 none, 1 alpha, 2 additive, 3 modulo, 4 multiply.", default: 1, allowed_values: [0, 1, 2, 3, 4]}
+      - {name: blendmode, type: Integer, doc: "Blend mode that takes precedence over blendmode_enum: 0 none, 1 alpha, 2 additive, 4 modulo, 8 multiply.", allowed_values: [0, 1, 2, 4, 8]}
+      - {name: scale_quality_enum, type: Integer, doc: "Scaling quality: 0 nearest, 1 and 2 linear, 3 pixel art.", default: 0, allowed_values: [0, 1, 2, 3]}
+      - {name: id, type: Integer, doc: "Stable identifier used to cache generated textures such as solids."}
+      - {name: angle_x, type: Numeric, doc: "X component of the rotation axis for 3D transforms."}
+      - {name: angle_y, type: Numeric, doc: "Y component of the rotation axis for 3D transforms."}
+      - {name: z, type: Numeric, doc: "Depth used to sort sprites when drawing."}
+
   - name: label
     primitive_marker: label
-    keys: []
+    keys:
+      - {name: x, type: Numeric, doc: "X position."}
+      - {name: y, type: Numeric, doc: "Y position."}
+      - {name: w, type: Numeric, doc: "Optional render width used when wrapping text."}
+      - {name: h, type: Numeric, doc: "Optional render height."}
+      - {name: text, type: String, doc: "Text to render."}
+      - {name: font, type: String, doc: "Path to a TTF font relative to the game folder."}
+      - {name: size_enum, type: Integer, doc: "Relative font size where 0 is comfortable and each step is 2px at 720p.", default: 0}
+      - {name: size_px, type: Numeric, doc: "Explicit font size in pixels. Takes precedence over size_enum."}
+      - {name: alignment_enum, type: Integer, doc: "Horizontal alignment: 0 left, 1 center, 2 right. Ignored when anchor_x is given.", default: 0, allowed_values: [0, 1, 2]}
+      - {name: vertical_alignment_enum, type: Integer, doc: "Vertical alignment: 0 bottom, 1 center, 2 top. Ignored when anchor_y is given.", default: 0, allowed_values: [0, 1, 2]}
+      - {name: anchor_x, type: Numeric, doc: "Horizontal anchor relative to the label width. Overrides alignment_enum."}
+      - {name: anchor_y, type: Numeric, doc: "Vertical anchor relative to the label height. Overrides vertical_alignment_enum."}
+      - {name: r, type: Numeric, doc: "Red from 0 to 255.", default: 255}
+      - {name: g, type: Numeric, doc: "Green from 0 to 255.", default: 255}
+      - {name: b, type: Numeric, doc: "Blue from 0 to 255.", default: 255}
+      - {name: a, type: Numeric, doc: "Alpha from 0 to 255.", default: 255}
+      - {name: blendmode_enum, type: Integer, doc: "Deprecated blend mode: 0 none, 1 alpha, 2 additive, 3 modulo, 4 multiply.", default: 1, allowed_values: [0, 1, 2, 3, 4]}
+      - {name: scale_quality_enum, type: Integer, doc: "Scaling quality: 0 nearest, 1 and 2 linear, 3 pixel art.", default: 0, allowed_values: [0, 1, 2, 3]}
+
   - name: solid
     primitive_marker: solid
-    keys: []
+    keys:
+      - {name: x, type: Numeric, doc: "X position."}
+      - {name: y, type: Numeric, doc: "Y position."}
+      - {name: w, type: Numeric, doc: "Render width."}
+      - {name: h, type: Numeric, doc: "Render height."}
+      - {name: r, type: Numeric, doc: "Red from 0 to 255.", default: 255}
+      - {name: g, type: Numeric, doc: "Green from 0 to 255.", default: 255}
+      - {name: b, type: Numeric, doc: "Blue from 0 to 255.", default: 255}
+      - {name: a, type: Numeric, doc: "Alpha from 0 to 255.", default: 255}
+      - {name: anchor_x, type: Numeric, doc: "Positioning anchor on the X axis relative to the render width.", default: 0}
+      - {name: anchor_y, type: Numeric, doc: "Positioning anchor on the Y axis relative to the render height.", default: 0}
+      - {name: blendmode_enum, type: Integer, doc: "Deprecated blend mode: 0 none, 1 alpha, 2 additive, 3 modulo, 4 multiply.", default: 1, allowed_values: [0, 1, 2, 3, 4]}
+
   - name: border
     primitive_marker: border
-    keys: []
+    keys:
+      - {name: x, type: Numeric, doc: "X position."}
+      - {name: y, type: Numeric, doc: "Y position."}
+      - {name: w, type: Numeric, doc: "Border width."}
+      - {name: h, type: Numeric, doc: "Border height."}
+      - {name: r, type: Numeric, doc: "Red from 0 to 255.", default: 255}
+      - {name: g, type: Numeric, doc: "Green from 0 to 255.", default: 255}
+      - {name: b, type: Numeric, doc: "Blue from 0 to 255.", default: 255}
+      - {name: a, type: Numeric, doc: "Alpha from 0 to 255.", default: 255}
+      - {name: anchor_x, type: Numeric, doc: "Positioning anchor on the X axis relative to the width.", default: 0}
+      - {name: anchor_y, type: Numeric, doc: "Positioning anchor on the Y axis relative to the height.", default: 0}
+      - {name: blendmode_enum, type: Integer, doc: "Deprecated blend mode: 0 none, 1 alpha, 2 additive, 3 modulo, 4 multiply.", default: 1, allowed_values: [0, 1, 2, 3, 4]}
+
   - name: line
     primitive_marker: line
-    keys: []
+    keys:
+      - {name: x, type: Numeric, doc: "X position of the start point."}
+      - {name: y, type: Numeric, doc: "Y position of the start point."}
+      - {name: x2, type: Numeric, doc: "X position of the end point."}
+      - {name: y2, type: Numeric, doc: "Y position of the end point."}
+      - {name: r, type: Numeric, doc: "Red from 0 to 255.", default: 255}
+      - {name: g, type: Numeric, doc: "Green from 0 to 255.", default: 255}
+      - {name: b, type: Numeric, doc: "Blue from 0 to 255.", default: 255}
+      - {name: a, type: Numeric, doc: "Alpha from 0 to 255.", default: 255}
+      - {name: blendmode_enum, type: Integer, doc: "Deprecated blend mode: 0 none, 1 alpha, 2 additive, 3 modulo, 4 multiply.", default: 1, allowed_values: [0, 1, 2, 3, 4]}
+
+  - name: screenshot
+    keys:
+      - {name: x, type: Numeric, doc: "X position of the captured area."}
+      - {name: y, type: Numeric, doc: "Y position of the captured area."}
+      - {name: w, type: Numeric, doc: "Width of the captured area."}
+      - {name: h, type: Numeric, doc: "Height of the captured area."}
+      - {name: path, type: String, doc: "Output path of the PNG file inside the game directory."}
+      - {name: r, type: Numeric, doc: "Red component of the optional chroma key color."}
+      - {name: g, type: Numeric, doc: "Green component of the optional chroma key color."}
+      - {name: b, type: Numeric, doc: "Blue component of the optional chroma key color."}
+      - {name: a, type: Numeric, doc: "Alpha applied to the chroma key color."}

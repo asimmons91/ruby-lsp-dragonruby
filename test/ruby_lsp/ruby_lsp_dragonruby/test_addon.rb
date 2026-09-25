@@ -48,6 +48,25 @@ module RubyLsp
         Registry.reset!
       end
 
+      def test_activation_configures_indexing_enhancement
+        addon = Addon.new(logger: quiet_logger)
+        addon.activate(nil, nil)
+
+        assert_same addon.registry, IndexingEnhancement.registry
+      ensure
+        addon.deactivate
+      end
+
+      def test_deactivate_clears_indexing_enhancement
+        addon = Addon.new(logger: quiet_logger)
+        addon.activate(nil, nil)
+        addon.deactivate
+
+        assert_nil IndexingEnhancement.registry
+      ensure
+        Registry.reset!
+      end
+
       def test_listener_factories_are_nil_safe_before_activation
         addon = Addon.new(logger: quiet_logger)
 
