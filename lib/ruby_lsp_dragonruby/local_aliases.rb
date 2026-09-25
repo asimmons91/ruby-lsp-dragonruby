@@ -32,6 +32,17 @@ module RubyLsp
       ].freeze
       SHADOW = :shadow
 
+      def initialize
+        @events_cache = {}
+      end
+
+      # Drops memoized scope walks. Callers that resolve many reads from one
+      # parse (the state collector) reset before each document so the cache
+      # does not retain nodes from earlier parses.
+      def reset!
+        @events_cache.clear
+      end
+
       # Returns the nearest visible assignment node for a local variable read,
       # or nil when the variable has no visible assignment or is shadowed by a
       # block parameter or block-local.
@@ -42,13 +53,22 @@ module RubyLsp
         return nil if scopes.empty?
 
         offset = read.location.start_offset
-        events = scopes.flat_map { |scope| events_for(scope, scopes) }
-        nearest = events
-          .select { |name, event_offset, _| name == read.name && event_offset < offset }
-          .max_by { |_, event_offset, _| event_offset }
-        return nil if nearest.nil? || nearest.last == SHADOW
+        nearest_offset = nil
+        nearest_target = nil
 
-        nearest.last
+        scopes.each do |scope|
+          events_for(scope, scopes)[read.name]&.each do |event_offset, target|
+            next unless event_offset < offset
+            next if nearest_offset && event_offset <= nearest_offset
+
+            nearest_offset = event_offset
+            nearest_target = target
+          end
+        end
+
+        return nil if nearest_target.nil? || nearest_target == SHADOW
+
+        nearest_target
       end
 
       private
@@ -76,9 +96,20 @@ module RubyLsp
       end
 
       def events_for(scope, chain)
-        events = []
-        walk(body_of(scope), chain[chain.index(scope) + 1], events)
-        events
+        next_scope = chain[chain.index(scope) + 1]
+        @events_cache[[scope, next_scope]] ||= begin
+          events = []
+          walk(body_of(scope), next_scope, events)
+          index_events(events)
+        end
+      end
+
+      # Events are indexed by variable name so a read scans only its own
+      # candidates instead of every write in the scope.
+      def index_events(events)
+        events.each_with_object({}) do |(name, offset, target), index|
+          (index[name] ||= []) << [offset, target]
+        end
       end
 
       # Collects writes from a scope's own statements, without crossing into

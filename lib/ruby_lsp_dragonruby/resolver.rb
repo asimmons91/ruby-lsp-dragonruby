@@ -7,12 +7,14 @@ require_relative "local_aliases"
 module RubyLsp
   module Dragonruby
     # Resolves an expression to a DragonRuby type by walking chains left to
-    # right through registry member returns.
+    # right through registry member returns. Argument-free calls on the state
+    # root and on state sub-paths resolve to dynamic `args.state` paths.
     class Resolver
-      def initialize(registry, roots: nil, index: nil)
+      def initialize(registry, roots: nil, index: nil, state_store: nil)
         @registry = registry
         @roots = roots || Roots.new(registry, index: index)
         @aliases = LocalAliases.new
+        @state_store = state_store
         @resolving = {}
       end
 
@@ -29,6 +31,12 @@ module RubyLsp
         else
           resolve_root(node, context)
         end
+      end
+
+      # Drops memoized alias scope walks; bulk consumers call this before
+      # resolving a whole new parse.
+      def reset_aliases!
+        @aliases.reset!
       end
 
       private
@@ -78,12 +86,50 @@ module RubyLsp
         end
 
         receiver = resolve(node.receiver, context)
-        return Resolution.unknown unless receiver.resolved_type?
+        return Resolution.unknown unless receiver.confident?
 
-        member = receiver.type.member(node.name.to_s)
-        return Resolution.unknown unless member
+        if receiver.resolved_type?
+          resolve_typed_member(node, receiver.type)
+        elsif receiver.state_path?
+          resolve_state_member(node, receiver.state_path)
+        else
+          Resolution.unknown
+        end
+      end
 
-        resolution_for(member.returns)
+      def resolve_typed_member(node, type)
+        member = type.member(node.name.to_s)
+        return resolution_for(member.returns) if member
+        return Resolution.of_state(node.name.to_s) if @registry.state_type?(type) && plain_call?(node)
+
+        Resolution.unknown
+      end
+
+      # A known child path wins over a curated entity member of the same name,
+      # because the write is what created the path. Argument-free unknown names
+      # extend the path even before anything writes them, so completion can
+      # follow a chain that is only written elsewhere.
+      def resolve_state_member(node, path)
+        candidate = "#{path}.#{node.name}"
+        member = @registry.entity_type&.member(node.name.to_s)
+        known = @state_store&.path?(candidate)
+        plain = plain_call?(node)
+
+        if member && !plain
+          resolution_for(member.returns)
+        elsif known && plain
+          Resolution.of_state(candidate)
+        elsif member
+          resolution_for(member.returns)
+        elsif plain
+          Resolution.of_state(candidate)
+        else
+          Resolution.unknown
+        end
+      end
+
+      def plain_call?(node)
+        node.arguments.nil? && node.opening_loc.nil? && node.block.nil?
       end
 
       def resolve_root(node, context)

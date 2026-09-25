@@ -12,17 +12,21 @@ module RubyLsp
   module Dragonruby
     module Listeners
       # Offers curated members after a confidently resolved DragonRuby
-      # receiver, and schema keys inside primitive hash literals.
+      # receiver, schema keys inside primitive hash literals, and known
+      # `args.state` child paths.
       class Completion
         include Requests::Support::Common
 
-        def initialize(response_builder, registry, node_context, dispatcher, _uri, logger: nil, index: nil)
+        def initialize(response_builder, registry, node_context, dispatcher, uri, logger: nil, index: nil, state: nil)
           @response_builder = response_builder
           @registry = registry
           @node_context = node_context
           @logger = logger
-          @resolver = Resolver.new(registry, index: index)
+          @state = state
+          @resolver = state&.resolver || Resolver.new(registry, index: index)
 
+          state&.ensure_workspace_scanned
+          state&.refresh(uri, node_context) if uri
           dispatcher.register(self, :on_call_node_enter)
         end
 
@@ -42,12 +46,24 @@ module RubyLsp
 
           receiver, filter = Chain.target(node)
           resolution = @resolver.resolve(receiver, @node_context)
-          return unless resolution.resolved_type?
+          return unless resolution.confident?
 
           range = edit_range(node)
           return unless range
 
-          push_members(resolution.type, filter, range)
+          if resolution.resolved_type?
+            push_members(resolution.type, filter, range)
+            push_state_children("", filter, range) if @registry.state_type?(resolution.type)
+          elsif resolution.state_path?
+            push_state_members(resolution.state_path, filter, range)
+          end
+        end
+
+        # A state sub-path behaves like an entity: its curated members are
+        # offered alongside the known child paths (REQ-M5-08).
+        def push_state_members(path, filter, range)
+          push_members(@registry.entity_type, filter, range) if @registry.entity_type
+          push_state_children(path, filter, range)
         end
 
         def handle_primitive(node)
@@ -114,9 +130,8 @@ module RubyLsp
           PrimitiveContext.hashes(call).find { |hash| PrimitiveContext.unclosed?(hash) }
         end
 
-        def push_members(type, filter, range)
+        def push_members(type, filter, range, offered = {})
           existing = @response_builder.response.map(&:label)
-          offered = {}
 
           type.all_members.each do |member|
             member.signatures.each do |name|
@@ -127,6 +142,49 @@ module RubyLsp
               @response_builder << build_item(member, name, range)
             end
           end
+
+          offered
+        end
+
+        # The known child paths of a state root or sub-path, with their
+        # inferred types (REQ-M5-08).
+        def push_state_children(path, filter, range)
+          return unless @state
+
+          existing = @response_builder.response.map(&:label)
+          offered = {}
+
+          @state.child_names(path).each do |name|
+            next unless name.start_with?(filter)
+            next if existing.include?(name) || offered[name]
+
+            offered[name] = true
+            child_path = path.empty? ? name : "#{path}.#{name}"
+            @response_builder << build_state_item(name, @state.entry(child_path), range)
+          end
+        end
+
+        def build_state_item(name, entry, range)
+          Interface::CompletionItem.new(
+            label: name,
+            filter_text: name,
+            detail: entry ? entry.types.join(" | ") : "Unknown",
+            label_details: Interface::CompletionItemLabelDetails.new(description: "DragonRuby state"),
+            kind: Constant::CompletionItemKind::FIELD,
+            documentation: Interface::MarkupContent.new(kind: Constant::MarkupKind::MARKDOWN, value: state_doc(entry)),
+            text_edit: Interface::TextEdit.new(range: range, new_text: name)
+          )
+        end
+
+        def state_doc(entry)
+          return "" unless entry
+
+          count = entry.write_count
+          suffix = (count == 1) ? "" : "s"
+          content = "#{count} write site#{suffix}."
+          first = entry.first_initialization
+          content << "\n\nFirst initialized at `#{first.uri}:#{first.line + 1}`." if first&.uri
+          content
         end
 
         def push_keys(schemas, hash, filter:, range:)

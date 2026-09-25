@@ -24,6 +24,8 @@ module RubyLsp
       DATA_DIR = File.expand_path("../../data", __dir__)
       UNKNOWN = "Unknown"
       UNSET = Object.new.freeze
+      STATE_ROOT = "GTK::State"
+      STATE_ENTITY = "GTK::Entity"
       CORE_TYPES = %w[
         Array
         Boolean
@@ -71,6 +73,20 @@ module RubyLsp
 
       def type(name)
         @types[name]
+      end
+
+      # The type that roots dynamic state paths (`args.state`).
+      def state_type
+        @types[STATE_ROOT]
+      end
+
+      def state_type?(type)
+        !type.nil? && type.name == STATE_ROOT
+      end
+
+      # The type whose curated members are offered under a state sub-path.
+      def entity_type
+        @types[STATE_ENTITY]
       end
 
       def schema(name)

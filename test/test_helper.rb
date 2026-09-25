@@ -6,7 +6,11 @@ require "ruby_lsp/internal"
 require "ruby_lsp/test_helper"
 require "ruby_lsp_dragonruby/indexing_enhancement"
 require "ruby_lsp_dragonruby/listeners/completion"
+require "ruby_lsp_dragonruby/listeners/definition"
 require "ruby_lsp_dragonruby/listeners/hover"
+require "ruby_lsp_dragonruby/state_collector"
+require "ruby_lsp_dragonruby/state_store"
+require "ruby_lsp_dragonruby/state_tracker"
 
 require "minitest/autorun"
 require "tmpdir"
@@ -309,5 +313,32 @@ module ServerTestHelper
       params: {textDocument: {uri: uri}, position: {line: line, character: character}}
     )
     pop_result(server).response&.contents&.value
+  end
+
+  def definition_locations(server, uri, line, character)
+    server.process_message(
+      id: 1,
+      method: "textDocument/definition",
+      params: {textDocument: {uri: uri}, position: {line: line, character: character}}
+    )
+    Array(pop_result(server).response)
+  end
+
+  def dragonruby_addon(_server = nil)
+    RubyLsp::Addon.addons.find { |addon| addon.is_a?(RubyLsp::Dragonruby::Addon) }
+  end
+
+  def reindex_state(server, uri, source)
+    dragonruby_addon(server).state_tracker.replace_source(uri, source)
+  end
+
+  def state_tracker(server)
+    dragonruby_addon(server).state_tracker
+  end
+
+  # Test servers never run initial indexing, and watcher notifications are
+  # deferred until it completes.
+  def mark_indexing_complete(server)
+    server.global_state.index.instance_variable_set(:@initial_indexing_completed, true)
   end
 end
