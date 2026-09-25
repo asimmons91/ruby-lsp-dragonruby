@@ -2,6 +2,8 @@
 
 require "prism"
 
+require_relative "local_aliases"
+
 module RubyLsp
   module Dragonruby
     # Resolves an expression to a DragonRuby type by walking chains left to
@@ -10,6 +12,8 @@ module RubyLsp
       def initialize(registry, roots: nil, index: nil)
         @registry = registry
         @roots = roots || Roots.new(registry, index: index)
+        @aliases = LocalAliases.new
+        @resolving = {}
       end
 
       def resolve(node, context = nil)
@@ -18,6 +22,8 @@ module RubyLsp
         case node
         when Prism::ParenthesesNode
           resolve_parentheses(node, context)
+        when Prism::LocalVariableReadNode
+          resolve_local(node, context)
         when Prism::CallNode
           resolve_call(node, context)
         else
@@ -26,6 +32,36 @@ module RubyLsp
       end
 
       private
+
+      # A local variable resolves to the value of its nearest preceding
+      # assignment. Without one it falls through to the root strategies, so
+      # method parameters still work; a reassignment to an expression that
+      # does not resolve replaces the earlier type from that point on.
+      def resolve_local(node, context)
+        assignment = @aliases.assignment_for(node, context)
+        return resolve_root(node, context) unless assignment
+        return Resolution.unknown if resolving?(assignment)
+
+        @resolving[assignment.object_id] = true
+        begin
+          resolve_alias_value(assignment, context)
+        ensure
+          @resolving.delete(assignment.object_id)
+        end
+      end
+
+      def resolve_alias_value(assignment, context)
+        case assignment
+        when Prism::LocalVariableWriteNode, Prism::LocalVariableOrWriteNode, Prism::LocalVariableAndWriteNode
+          resolve(assignment.value, context)
+        else
+          Resolution.unknown
+        end
+      end
+
+      def resolving?(assignment)
+        @resolving[assignment.object_id]
+      end
 
       def resolve_parentheses(node, context)
         body = node.body

@@ -303,7 +303,7 @@ Each spike produces a short written decision in `docs/decisions/`.
 - **REQ-M4-05** Aliases may chain (`i = args.inputs; kb = i.keyboard`).
 - **REQ-M4-06** Aliases of `args.state` or of state sub-paths participate in M5 tracking.
 - **REQ-M4-07** Instance variables, multiple assignment, and aliases across methods are out of scope.
-- **REQ-M4-08** Hovering an alias variable shows its resolved type.
+- **REQ-M4-08** Hovering an alias variable shows its resolved type where Ruby LSP selects local variable reads as hover targets. Hovering a member through an alias always shows that member's docs. Hovering a bare alias is not reachable through Ruby LSP's hover target selection in the pinned range (see M0-S1); it is a known limitation until Ruby LSP includes local variables in hover targets.
 
 #### Acceptance criteria
 

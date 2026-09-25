@@ -218,7 +218,167 @@ module RubyLsp
         assert_predicate resolution, :unknown?
       end
 
+      def test_local_alias_resolves_its_assigned_type
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = args.inputs.keyboard
+            kb.contro‸l
+          end
+        RUBY
+
+        assert_equal "Boolean", resolution.core_type
+      end
+
+      def test_chained_local_aliases_resolve
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            i = args.inputs
+            kb = i.keyboard
+            kb.contro‸l
+          end
+        RUBY
+
+        assert_equal "Boolean", resolution.core_type
+      end
+
+      def test_reassignment_replaces_the_earlier_type
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            source = args.inputs
+            source = args.outputs
+            source.sprit‸es
+          end
+        RUBY
+
+        assert_equal "GTK::Outputs::Sprites", resolution.type.name
+      end
+
+      def test_reassignment_to_an_unresolvable_expression_stops_resolution
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = args.inputs.keyboard
+            kb = nil
+            kb.contro‸l
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_reassigning_a_parameter_replaces_the_root
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            args = nil
+            args.inp‸uts
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_assignments_inside_conditionals_count
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            if args.state.foo
+              kb = args.inputs.keyboard
+            end
+            kb.contro‸l
+          end
+        RUBY
+
+        assert_equal "Boolean", resolution.core_type
+      end
+
+      def test_block_parameters_shadow_outer_aliases
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = args.inputs.keyboard
+            [1].each { |kb| kb.contro‸l }
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_destructured_block_parameters_shadow_outer_aliases
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = args.inputs.keyboard
+            [[1]].each { |(kb)| kb.contro‸l }
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_block_locals_do_not_leak_out
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            [1].each { kb = args.inputs.keyboard }
+            kb.contro‸l
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_parenthesized_alias_receivers_resolve
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = args.inputs.keyboard
+            (kb).contro‸l
+          end
+        RUBY
+
+        assert_equal "Boolean", resolution.core_type
+      end
+
+      def test_safe_navigation_through_an_alias_resolves
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = args.inputs.keyboard
+            kb&.contro‸l
+          end
+        RUBY
+
+        assert_equal "Boolean", resolution.core_type
+      end
+
+      def test_self_referential_alias_is_unknown
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = kb
+            kb.contro‸l
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_operator_writes_stop_resolution
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            kb = args.inputs.keyboard
+            kb += 1
+            kb.contro‸l
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_alias_resolution_without_a_context_is_unknown
+        read = Prism.parse("def tick(args)\n  kb = args.inputs\n  kb\nend").value.statements.body.first.body.body.last
+
+        assert_predicate @resolver.resolve(read, nil), :unknown?
+      end
+
       private
+
+      def resolve_at_cursor(source)
+        context = locate_context(source, adjust: 0, node_types: [Prism::CallNode])
+        @resolver.resolve(context.node, context)
+      end
 
       def resolve_indexed(source)
         registry = load_registry(valid_files)
