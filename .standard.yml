@@ -1,3 +1,7 @@
 # For available configuration options, see:
 #   https://github.com/standardrb/standard
 ruby_version: 3.2
+ignore:
+  # Sample game fixtures are intentionally unlinted: they use DragonRuby
+  # globals like $gtk, and wip.rb is deliberately syntactically incomplete.
+  - benchmark/sample_game/**/*

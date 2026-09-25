@@ -5,6 +5,9 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in ruby-lsp-dragonruby.gemspec
 gemspec
 
+# CI runs the lowest and highest ruby-lsp versions in the pinned range.
+gem "ruby-lsp", ENV["RUBY_LSP_VERSION"] if ENV["RUBY_LSP_VERSION"]
+
 gem "irb"
 gem "rake", "~> 13.0"
 
