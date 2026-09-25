@@ -1,0 +1,16 @@
+schemas:
+  - name: sprite
+    primitive_marker: sprite
+    keys: []
+  - name: label
+    primitive_marker: label
+    keys: []
+  - name: solid
+    primitive_marker: solid
+    keys: []
+  - name: border
+    primitive_marker: border
+    keys: []
+  - name: line
+    primitive_marker: line
+    keys: []

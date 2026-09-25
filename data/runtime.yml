@@ -1,0 +1,108 @@
+types:
+  - name: GTK::Runtime
+    doc: "The DragonRuby runtime, available as $gtk and args.gtk and documented as DR. Provides window control, platform and file IO helpers, and developer tooling."
+    members:
+      - {name: args, kind: attribute, returns: GTK::Args, doc: "The current args object graph, handy when only $gtk is in scope."}
+      - {name: dlopen, kind: method, returns: Unknown, doc: "Loads a precompiled C extension by library name.", params: [{name: name, kind: required, type: String}], docs_url: "https://docs.dragonruby.org/#/api/runtime?id=dlopen"}
+      - {name: get_dlopen_path, kind: method, returns: String, doc: "Returns the path searched for dynamic libraries, optionally for a specific library.", params: [{name: name, kind: optional, type: String}], docs_url: "https://docs.dragonruby.org/#/api/runtime?id=get_dlopen_path"}
+      - {name: window_fullscreen?, kind: attribute, returns: Boolean, doc: "True if the window is currently fullscreen.", docs_url: "https://docs.dragonruby.org/#/api/runtime?id=window_fullscreen"}
+      - {name: can_resize_window?, kind: attribute, returns: Boolean, doc: "True if the window can be resized on this platform."}
+      - {name: set_window_fullscreen, kind: method, returns: Unknown, doc: "Makes the window fullscreen or windowed.", params: [{name: fullscreen, kind: required, type: Boolean}]}
+      - {name: toggle_window_fullscreen, kind: method, returns: Unknown, doc: "Toggles the fullscreen state of the window."}
+      - {name: set_window_size, kind: method, returns: Unknown, doc: "Resizes the window to the given width and height. For development use.", params: [{name: width, kind: required, type: Numeric}, {name: height, kind: required, type: Numeric}]}
+      - {name: set_window_position, kind: method, returns: Unknown, doc: "Moves the window to the given position. For development use.", params: [{name: x, kind: required, type: Numeric}, {name: y, kind: required, type: Numeric}]}
+      - {name: set_window_scale, kind: method, returns: Unknown, doc: "Resizes the window to a percentage of 1280x720, with optional aspect ratio. For development use.", params: [{name: scale, kind: required, type: Numeric}, {name: aspect_w, kind: optional, type: Numeric}, {name: aspect_h, kind: optional, type: Numeric}]}
+      - {name: set_window_title, kind: method, returns: Unknown, doc: "Updates the window title.", params: [{name: title, kind: required, type: String}]}
+      - {name: can_close_window?, kind: attribute, returns: Boolean, doc: "True if quitting is allowed on the current platform."}
+      - {name: move_window_to_next_display, kind: method, returns: Unknown, doc: "Moves the window to the next monitor. For development use."}
+      - {name: maximize_window, kind: method, returns: Unknown, doc: "Maximizes the window when resizing is supported."}
+      - {name: can_change_orientation?, kind: attribute, returns: Boolean, doc: "True if the game orientation can change while running."}
+      - {name: toggle_orientation, kind: method, returns: Unknown, doc: "Switches between landscape and portrait. For development use."}
+      - {name: set_orientation, kind: method, returns: Unknown, doc: "Sets the game orientation to :landscape or :portrait. For development use.", params: [{name: orientation, kind: required, type: Symbol}]}
+      - {name: set_hd_max_scale, kind: method, returns: Unknown, doc: "Updates the hd_max_scale metadata value at runtime. For development use.", params: [{name: scale, kind: required, type: Integer}]}
+      - {name: toggle_hd_letterbox, kind: method, returns: Unknown, doc: "Adds or removes the HD letterbox at runtime. For development use."}
+      - {name: set_hd_letterbox, kind: method, returns: Unknown, doc: "Sets the HD letterbox at runtime.", params: [{name: letterbox, kind: required, type: Boolean}]}
+      - {name: raise_window, kind: method, returns: Unknown, doc: "Brings the game window to the front and gives it focus. For development use."}
+      - {name: on_tick_count, kind: method, returns: Unknown, doc: "Schedules the block to run at the start of the given tick.", params: [{name: tick_count, kind: required, type: Integer}, {kind: block, type: Object}], docs_url: "https://docs.dragonruby.org/#/api/runtime?id=on_tick_count"}
+      - {name: calcstringbox, kind: method, returns: Array, doc: "Render width and height for a piece of text as a two-value array.", params: [{name: text, kind: required, type: String}, {name: size_enum, kind: optional, type: Integer}, {name: font, kind: optional, type: String}], docs_url: "https://docs.dragonruby.org/#/api/runtime?id=calcstringbox"}
+      - {name: calcstringbox_h, kind: method, returns: Hash, doc: "Render width and height for a piece of text as a hash with w and h.", params: [{name: text, kind: required, type: String}, {name: size_enum, kind: optional, type: Integer}, {name: font, kind: optional, type: String}]}
+      - {name: get_string_rect, kind: method, returns: Hash, doc: "Rect for a piece of text with x, y, w, h, and center.", params: [{name: text, kind: required, type: String}, {name: size_enum, kind: optional, type: Integer}, {name: font, kind: optional, type: String}]}
+      - {name: get_pixels, kind: method, returns: Hash, doc: "Pixel data for a sprite as w, h, and pixels.", params: [{name: file_path, kind: required, type: String}]}
+      - {name: request_quit, kind: method, returns: Unknown, doc: "Requests that the game exit after one more tick."}
+      - {name: quit_requested?, kind: attribute, returns: Boolean, doc: "True if the game is about to exit."}
+      - {name: platform?, kind: method, returns: Boolean, doc: "True if the current platform belongs to the given category such as :desktop, :mobile, or :steam.", params: [{name: category, kind: required, type: Symbol}], docs_url: "https://docs.dragonruby.org/#/api/runtime?id=platform"}
+      - {name: production?, kind: attribute, returns: Boolean, doc: "True when the game is running as a released build."}
+      - {name: platform_mappings, kind: attribute, returns: Hash, doc: "Map of platform strings to their symbol categories."}
+      - {name: openurl, kind: method, returns: Unknown, doc: "Opens the given URI in the default browser.", params: [{name: uri, kind: required, type: String}]}
+      - {name: system, kind: method, returns: Unknown, doc: "Runs an OS command and prints its output to the console. For development use.", params: [{name: command, kind: required, type: String}]}
+      - {name: exec, kind: method, returns: String, doc: "Runs an OS command and returns its output. For development use.", params: [{name: command, kind: required, type: String}]}
+      - {name: show_cursor, kind: method, returns: Unknown, doc: "Shows the mouse cursor."}
+      - {name: hide_cursor, kind: method, returns: Unknown, doc: "Hides the mouse cursor."}
+      - {name: cursor_shown?, kind: attribute, returns: Boolean, doc: "True if the mouse cursor is visible."}
+      - {name: set_mouse_grab, kind: method, returns: Unknown, doc: "Sets the mouse grab mode: 0 ungrabs, 1 grabs, 2 hides and grabs with relative positioning.", params: [{name: mode, kind: required, type: Integer}]}
+      - {name: set_system_cursor, kind: method, returns: Unknown, doc: "Sets a system cursor such as \"arrow\", \"ibeam\", \"wait\", or \"hand\".", params: [{name: cursor, kind: required, type: String}]}
+      - {name: set_cursor, kind: method, returns: Unknown, doc: "Replaces the mouse cursor with a sprite, optionally offset by x and y.", params: [{name: path, kind: required, type: String}, {name: x, kind: optional, type: Numeric}, {name: y, kind: optional, type: Numeric}]}
+      - {name: create_uuid, kind: method, returns: String, doc: "Returns a UUID string. Not cryptographically secure."}
+      - {name: getenv, kind: method, returns: String, doc: "Returns the value of an environment variable, or nil.", params: [{name: name, kind: required, type: String}]}
+      - {name: setenv, kind: method, returns: Unknown, doc: "Sets an environment variable, optionally overwriting an existing value.", params: [{name: name, kind: required, type: String}, {name: value, kind: required, type: String}, {name: overwrite, kind: required, type: Boolean}]}
+      - {name: list_files, kind: method, returns: Array, doc: "Returns all files within the given directory relative to the game root.", params: [{name: directory, kind: required, type: String}]}
+      - {name: stat_file, kind: method, returns: Hash, doc: "Returns metadata for a file, or nil if it does not exist.", params: [{name: path, kind: required, type: String}]}
+      - {name: read_save_data, kind: method, returns: String, doc: "Reads a file from the platform save enclave, or nil.", params: [{name: path, kind: required, type: String}]}
+      - {name: write_save_data, kind: method, returns: Unknown, doc: "Writes a file into the platform save enclave.", params: [{name: path, kind: required, type: String}, {name: contents, kind: required, type: String}]}
+      - {name: read_file, kind: method, returns: String, doc: "Reads a game data file, or nil if it does not exist.", params: [{name: path, kind: required, type: String}]}
+      - {name: write_file, kind: method, returns: Unknown, doc: "Overwrites a game data file with the given contents.", params: [{name: path, kind: required, type: String}, {name: contents, kind: required, type: String}]}
+      - {name: append_file, kind: method, returns: Unknown, doc: "Appends contents to a game data file, creating it if needed.", params: [{name: path, kind: required, type: String}, {name: contents, kind: required, type: String}]}
+      - {name: delete_file, kind: method, returns: Unknown, doc: "Deletes the given file or empty directory inside the sandbox.", params: [{name: path, kind: required, type: String}]}
+      - {name: parse_json, kind: method, returns: Hash, doc: "Parses a JSON string into a hash.", params: [{name: json, kind: required, type: String}]}
+      - {name: parse_json_file, kind: method, returns: Hash, doc: "Parses a JSON file into a hash.", params: [{name: path, kind: required, type: String}]}
+      - {name: parse_xml, kind: method, returns: Hash, doc: "Parses an XML string into a recursive hash structure.", params: [{name: xml, kind: required, type: String}]}
+      - {name: parse_xml_file, kind: method, returns: Hash, doc: "Parses an XML file into a recursive hash structure.", params: [{name: path, kind: required, type: String}]}
+      - {name: http_get, kind: method, returns: Hash, doc: "Starts an asynchronous HTTP GET and returns a response object to poll.", params: [{name: url, kind: required, type: String}]}
+      - {name: http_post, kind: method, returns: Hash, doc: "Starts an asynchronous form-encoded HTTP POST and returns a response object to poll.", params: [{name: url, kind: required, type: String}, {name: form_fields, kind: required, type: Hash}, {name: headers, kind: required, type: Array}]}
+      - {name: http_post_body, kind: method, returns: Hash, doc: "Starts an asynchronous HTTP POST with a raw body and returns a response object to poll.", params: [{name: url, kind: required, type: String}, {name: body, kind: required, type: String}, {name: headers, kind: required, type: Array}]}
+      - {name: start_server!, kind: method, returns: Unknown, doc: "Starts the in-game HTTP server so requests appear in args.inputs.http_requests.", params: [{name: port, kind: keyword, type: Integer}, {name: enable_in_prod, kind: keyword, type: Boolean}]}
+      - {name: version, kind: attribute, returns: String, doc: "Version string of the running DragonRuby build.", docs_url: "https://docs.dragonruby.org/#/api/runtime?id=version"}
+      - {name: version_pro?, kind: attribute, returns: Boolean, doc: "True when the running build is not the Standard edition."}
+      - {name: game_version, kind: attribute, returns: String, doc: "The game version from game_metadata.txt."}
+      - {name: reset, kind: method, returns: Unknown, doc: "Resets the engine as if the game just started, clearing args.state."}
+      - {name: reset_next_tick, kind: method, returns: Unknown, doc: "Schedules a reset before the next tick."}
+      - {name: reset_and_replay, kind: method, returns: Unknown, doc: "Resets the engine and replays a recorded gameplay file.", params: [{name: path, kind: required, type: String}, {name: speed, kind: keyword, type: Numeric}]}
+      - {name: reset_sprite, kind: method, returns: Unknown, doc: "Invalidates the cached sprite for the given path, or a render target.", params: [{name: path, kind: required, type: String}, {name: log, kind: keyword, type: Boolean}]}
+      - {name: reset_sprites, kind: method, returns: Unknown, doc: "Invalidates every cached sprite, optionally logging the paths.", params: [{name: log, kind: keyword, type: Boolean}]}
+      - {name: reboot, kind: method, returns: Unknown, doc: "Resets the game and removes methods added by hotloads."}
+      - {name: calcspritebox, kind: method, returns: Array, doc: "Width and height of a sprite as a two-value array. For development use.", params: [{name: path, kind: required, type: String}]}
+      - {name: get_sprite_rect, kind: method, returns: Hash, doc: "Rect for a sprite with x, y, w, h, and center.", params: [{name: path, kind: required, type: String}]}
+      - {name: current_framerate, kind: attribute, returns: Float, doc: "Approximate current framerate, which settles at 60fps."}
+      - {name: framerate_diagnostics_primitives, kind: attribute, returns: Array, doc: "Primitives that visualize framerate, draw calls, and mouse position."}
+      - {name: warn_array_primitives!, kind: method, returns: Unknown, doc: "Logs a warning each time an array-based primitive is rendered."}
+      - {name: benchmark, kind: method, returns: Unknown, doc: "Runs named lambdas comparing their performance by iterations or seconds.", params: [{name: options, kind: rest, type: Hash}]}
+      - {name: notify!, kind: method, returns: Unknown, doc: "Shows a message at the bottom of the game in development mode.", params: [{name: message, kind: required, type: String}, {name: duration, kind: optional, type: Integer}]}
+      - {name: notify_extended!, kind: method, returns: Unknown, doc: "Shows a notification with explicit message, duration, and environment.", params: [{name: message, kind: keyword, type: String}, {name: duration, kind: keyword, type: Integer}, {name: env, kind: keyword, type: Symbol}]}
+      - {name: slowmo!, kind: method, returns: Unknown, doc: "Slows the simulation by the given factor of 60fps. For debugging.", params: [{name: factor, kind: required, type: Numeric}]}
+      - {name: show_console, kind: method, returns: Unknown, doc: "Shows the DragonRuby console."}
+      - {name: hide_console, kind: method, returns: Unknown, doc: "Hides the DragonRuby console."}
+      - {name: enable_console, kind: method, returns: Unknown, doc: "Allows the console to be opened with the tilde key."}
+      - {name: disable_console, kind: method, returns: Unknown, doc: "Prevents the console from being opened."}
+      - {name: disable_reset_via_ctrl_r, kind: method, returns: Unknown, doc: "Disables the default Ctrl+R reset shortcut."}
+      - {name: disable_controller_config, kind: method, returns: Unknown, doc: "Disables the built-in controller configuration wizard."}
+      - {name: enable_controller_config, kind: method, returns: Unknown, doc: "Enables the built-in controller configuration wizard."}
+      - {name: start_recording, kind: method, returns: Unknown, doc: "Resets the game to tick zero and starts recording gameplay."}
+      - {name: stop_recording, kind: method, returns: Unknown, doc: "Stops recording and writes the replay to the given file.", params: [{name: destination, kind: required, type: String}]}
+      - {name: cancel_recording, kind: method, returns: Unknown, doc: "Cancels the current recording and discards the replay."}
+      - {name: start_replay, kind: method, returns: Unknown, doc: "Replays a recorded gameplay file against the current code.", params: [{name: file, kind: required, type: String}]}
+      - {name: stop_replay, kind: method, returns: Unknown, doc: "Stops a replay that is currently running."}
+      - {name: get_base_dir, kind: attribute, returns: String, doc: "Directory containing the DragonRuby binary. For development use."}
+      - {name: get_game_dir, kind: attribute, returns: String, doc: "Sandboxed game directory where file writes go."}
+      - {name: get_game_dir_url, kind: attribute, returns: String, doc: "URL-encoded sandbox location for game data."}
+      - {name: open_game_dir, kind: method, returns: Unknown, doc: "Opens the game directory in the OS file explorer. For development use."}
+      - {name: write_file_root, kind: method, returns: Unknown, doc: "Writes a file outside the game directory. For development use.", params: [{name: path, kind: required, type: String}, {name: contents, kind: required, type: String}]}
+      - {name: append_file_root, kind: method, returns: Unknown, doc: "Appends to a file outside the game directory. For development use.", params: [{name: path, kind: required, type: String}, {name: contents, kind: required, type: String}]}
+      - {name: argv, kind: attribute, returns: String, doc: "Command line arguments passed to the DragonRuby binary. For development use."}
+      - {name: cli_arguments, kind: attribute, returns: Hash, doc: "Command line switches in --switch value form. For development use."}
+      - {name: download_lib, kind: method, returns: Unknown, doc: "Downloads a Ruby library from GitHub into a conventional folder.", params: [{name: url, kind: required, type: String}, {name: repository, kind: optional, type: String}, {name: file, kind: optional, type: String}]}
+      - {name: download_lib_raw, kind: method, returns: Unknown, doc: "Downloads a Ruby library from a raw URL to a raw local path.", params: [{name: url, kind: required, type: String}, {name: local_path, kind: required, type: String}]}
+      - {name: reload_history, kind: attribute, returns: Hash, doc: "Files loaded for the game along with reload timings. For development use."}
+      - {name: reload_history_pending, kind: attribute, returns: Hash, doc: "Files queued for reload but not yet processed. For development use."}
+      - {name: reload_if_needed, kind: method, returns: Unknown, doc: "Queues a file for reload if it changed, or always when forced. For development use.", params: [{name: file, kind: required, type: String}, {name: force, kind: optional, type: Boolean}]}
+      - {name: trace_puts!, kind: method, returns: Unknown, doc: "Prints caller information next to every puts statement. For development use."}
+      - {name: current_thermal_state, kind: attribute, returns: Symbol, doc: "Thermal state on iOS: :unknown, :nominal, :fair, :serious, or :critical. Nil elsewhere."}

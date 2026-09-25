@@ -1,0 +1,7 @@
+types:
+  - name: GTK::Events
+    doc: "Raw engine events and window notifications for the current tick."
+    members:
+      - {name: resize_occurred, kind: attribute, returns: Boolean, doc: "True if the window was resized or the device orientation changed.", docs_url: "https://docs.dragonruby.org/#/api/events?id=resize_occurred"}
+      - {name: orientation_changed, kind: attribute, returns: Boolean, doc: "True on the tick the game orientation changed.", docs_url: "https://docs.dragonruby.org/#/api/events?id=orientation_changed"}
+      - {name: raw, kind: attribute, returns: Array, doc: "Raw platform events as an array of hashes, useful for debugging.", docs_url: "https://docs.dragonruby.org/#/api/events?id=raw"}

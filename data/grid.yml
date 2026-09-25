@@ -1,0 +1,48 @@
+types:
+  - name: Grid
+    doc: "Screen and canvas information. All values respect the configured origin and orientation, and are available globally through Grid and $grid."
+    members:
+      - {name: orientation, kind: attribute, returns: Symbol, doc: "Either :landscape or :portrait.", docs_url: "https://docs.dragonruby.org/#/api/grid?id=orientation"}
+      - {name: orientation_changed?, kind: attribute, returns: Boolean, doc: "True on the frame the orientation changed."}
+      - {name: origin_name, kind: attribute, returns: Symbol, doc: "Either :bottom_left or :center.", docs_url: "https://docs.dragonruby.org/#/api/grid?id=origin_name"}
+      - {name: portrait?, kind: attribute, returns: Boolean, doc: "True when the game orientation is portrait."}
+      - {name: landscape?, kind: attribute, returns: Boolean, doc: "True when the game orientation is landscape."}
+      - {name: bottom, kind: attribute, returns: Numeric, doc: "Value representing the bottom of the grid."}
+      - {name: top, kind: attribute, returns: Numeric, doc: "Value representing the top of the grid. Alias of h."}
+      - {name: left, kind: attribute, returns: Numeric, doc: "Value representing the left of the grid."}
+      - {name: right, kind: attribute, returns: Numeric, doc: "Value representing the right of the grid."}
+      - {name: rect, kind: attribute, returns: Hash, doc: "The whole grid as a rectangle primitive with x, y, w, and h."}
+      - {name: w, kind: attribute, returns: Numeric, doc: "Logical width of the grid, 1280 in landscape and 720 in portrait."}
+      - {name: h, kind: attribute, returns: Numeric, doc: "Logical height of the grid, 720 in landscape and 1280 in portrait."}
+      - {name: aspect_ratio_w, kind: attribute, returns: Integer, doc: "Width component of the configured aspect ratio."}
+      - {name: aspect_ratio_h, kind: attribute, returns: Integer, doc: "Height component of the configured aspect ratio."}
+      - {name: aspect_size, kind: attribute, returns: Integer, doc: "The aspect_size value from game_metadata.txt, defaulting to 720."}
+      - {name: native_scale, kind: attribute, returns: Float, doc: "Native scale of the window compared to 720p."}
+      - {name: render_scale, kind: attribute, returns: Float, doc: "Render scale of the window compared to 720p."}
+      - {name: texture_scale, kind: attribute, returns: Float, doc: "Decimal rendering scale used to select texture atlases."}
+      - {name: texture_scale_enum, kind: attribute, returns: Integer, doc: "Integer rendering scale used to select texture atlases."}
+      - {name: refresh_rate, kind: attribute, returns: Float, doc: "Refresh rate of the current device or window."}
+      - {name: allscreen_left, kind: attribute, returns: Numeric, doc: "Left edge of the all-screen area, which may extend past the 16:9 safe area."}
+      - {name: allscreen_x, kind: attribute, returns: Numeric, doc: "Alias of allscreen_left."}
+      - {name: allscreen_right, kind: attribute, returns: Numeric, doc: "Right edge of the all-screen area."}
+      - {name: allscreen_y, kind: attribute, returns: Numeric, doc: "Alias of allscreen_right."}
+      - {name: allscreen_top, kind: attribute, returns: Numeric, doc: "Top edge of the all-screen area."}
+      - {name: allscreen_bottom, kind: attribute, returns: Numeric, doc: "Bottom edge of the all-screen area."}
+      - {name: allscreen_w, kind: attribute, returns: Numeric, doc: "Width of the all-screen area."}
+      - {name: allscreen_h, kind: attribute, returns: Numeric, doc: "Height of the all-screen area."}
+      - {name: allscreen_rect, kind: attribute, returns: Hash, doc: "The all-screen area as a rectangle primitive."}
+      - {name: allscreen_offset, kind: attribute, returns: Hash, doc: "Offset of the all-screen area from the safe area as x and y."}
+      - {name: allscreen_offset_x, kind: attribute, returns: Numeric, doc: "Horizontal offset of the all-screen area."}
+      - {name: allscreen_offset_y, kind: attribute, returns: Numeric, doc: "Vertical offset of the all-screen area."}
+      - name: origin_bottom_left!
+        kind: method
+        returns: Unknown
+        doc: "Moves the coordinate origin to the bottom left of the grid."
+      - name: origin_center!
+        kind: method
+        returns: Unknown
+        doc: "Moves the coordinate origin to the center of the grid."
+    generates:
+      - names: grid_px_properties
+        members:
+          - {name: "{{name}}_px", kind: attribute, returns: Numeric, doc: "Native pixel value for {{name}}."}

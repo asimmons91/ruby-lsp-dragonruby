@@ -1,0 +1,42 @@
+types:
+  - name: GTK::Audio
+    doc: "Hash-like collection of playing sounds and music. Assign a hash to a key to play it, and set it to nil to stop."
+    members:
+      - {name: volume, kind: attribute, returns: Numeric, doc: "Global volume applied to every audio source, from 0.0 to 1.0.", docs_url: "https://docs.dragonruby.org/#/api/audio?id=volume"}
+      - name: "[]"
+        kind: method
+        returns: GTK::AudioSource
+        doc: "Returns the audio source for the given key, or nil."
+        params: [{name: key, kind: required, type: Object}]
+      - name: "[]="
+        kind: method
+        returns: Unknown
+        doc: "Assigns an audio source hash to the key, or nil to stop and remove it."
+        params:
+          - {name: key, kind: required, type: Object}
+          - {name: source, kind: required, type: Hash}
+      - name: delete
+        kind: method
+        returns: GTK::AudioSource
+        doc: "Stops and removes the audio source for the given key."
+        params: [{name: key, kind: required, type: Object}]
+      - name: each
+        kind: method
+        returns: Unknown
+        doc: "Iterates over every playing audio source key and value."
+        params: [{kind: block, type: Object}]
+      - {name: keys, kind: attribute, returns: Array, doc: "Keys for every audio source currently playing."}
+
+  - name: GTK::AudioSource
+    doc: "A playing sound or music track. Properties added by the engine appear on the tick after playback starts."
+    members:
+      - {name: input, kind: attribute, returns: Unknown, doc: "File path, or an array of channels, sample rate, and generated samples for synthesized audio."}
+      - {name: gain, kind: attribute, returns: Float, doc: "Volume of the source from 0.0 to 1.0. Must be a float."}
+      - {name: pitch, kind: attribute, returns: Float, doc: "Playback pitch, where 1.0 is the original pitch. Must be a float."}
+      - {name: paused, kind: attribute, returns: Boolean, doc: "True while playback is paused."}
+      - {name: looping, kind: attribute, returns: Boolean, doc: "True if the source repeats until stopped."}
+      - {name: playtime, kind: attribute, returns: Float, doc: "Current playback position in seconds. Added after the source loads."}
+      - {name: playlength, kind: attribute, returns: Float, doc: "Length of the source in seconds. Added after the source loads."}
+      - {name: x, kind: attribute, returns: Float, doc: "Position of the source relative to the listener from -1.0 to 1.0."}
+      - {name: y, kind: attribute, returns: Float, doc: "Position of the source relative to the listener from -1.0 to 1.0."}
+      - {name: z, kind: attribute, returns: Float, doc: "Position of the source relative to the listener from -1.0 to 1.0."}

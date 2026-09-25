@@ -1,0 +1,54 @@
+types:
+  - name: GTK::Args
+    doc: "The live runtime object graph passed to boot, tick, reset, and other entry points. All game APIs hang off it."
+    members:
+      - name: inputs
+        kind: attribute
+        returns: GTK::Inputs
+        doc: "Keyboard, mouse, controller, and touch input state for the current tick."
+        docs_url: "https://docs.dragonruby.org/#/api/inputs"
+      - name: outputs
+        kind: attribute
+        returns: GTK::Outputs
+        doc: "Render collections and render targets. Push primitives into them to draw."
+        docs_url: "https://docs.dragonruby.org/#/api/outputs"
+      - name: state
+        kind: attribute
+        returns: GTK::State
+        doc: "Property bag that persists across ticks. Assign an empty Hash in boot to initialize it."
+        docs_url: "https://docs.dragonruby.org/#/api/state"
+      - name: grid
+        kind: attribute
+        returns: Grid
+        doc: "Screen and canvas information such as width, height, origin, and orientation."
+        docs_url: "https://docs.dragonruby.org/#/api/grid"
+      - name: geometry
+        kind: attribute
+        returns: Geometry
+        doc: "Geometry helpers for vectors, angles, rectangles, collisions, and transforms."
+        docs_url: "https://docs.dragonruby.org/#/api/geometry"
+      - name: easing
+        kind: attribute
+        returns: Easing
+        doc: "Easing functions that map tick counts to animation percentages."
+        docs_url: "https://docs.dragonruby.org/#/api/easing"
+      - name: audio
+        kind: attribute
+        returns: GTK::Audio
+        doc: "Hash-like collection of playing sounds and music. Assign an audio entry to play it."
+        docs_url: "https://docs.dragonruby.org/#/api/audio"
+      - name: gtk
+        kind: attribute
+        returns: GTK::Runtime
+        doc: "The DragonRuby runtime object, also available as the $gtk global."
+        docs_url: "https://docs.dragonruby.org/#/api/runtime"
+      - name: layout
+        kind: attribute
+        returns: Layout
+        doc: "Helpers for placing UI on a 24 by 12 virtual grid inside the safe area."
+        docs_url: "https://docs.dragonruby.org/#/api/layout"
+      - name: events
+        kind: attribute
+        returns: GTK::Events
+        doc: "Raw engine events and window resize notifications."
+        docs_url: "https://docs.dragonruby.org/#/api/events"

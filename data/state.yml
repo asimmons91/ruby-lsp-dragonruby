@@ -1,0 +1,54 @@
+types:
+  - name: GTK::State
+    open: true
+    doc: "Property bag that persists across ticks. Arbitrary nested values are allowed and create entities on demand."
+    members:
+      - {name: entity_id, kind: attribute, returns: Integer, doc: "Unique identifier assigned to this entity.", docs_url: "https://docs.dragonruby.org/#/api/state?id=entity_id"}
+      - {name: entity_type, kind: attribute, returns: Symbol, doc: "Optional symbol describing what this entity represents.", docs_url: "https://docs.dragonruby.org/#/api/state?id=entity_type"}
+      - {name: created_at, kind: attribute, returns: Integer, doc: "Kernel.tick_count when this entity was created."}
+      - {name: created_at_elapsed, kind: attribute, returns: Integer, doc: "Number of ticks since this entity was created."}
+      - {name: global_created_at, kind: attribute, returns: Integer, doc: "Kernel.global_tick_count when this entity was created."}
+      - {name: global_created_at_elapsed, kind: attribute, returns: Integer, doc: "Number of global ticks since this entity was created."}
+      - {name: as_hash, kind: attribute, returns: Hash, doc: "This entity cast to a Hash so values can be updated hash-style."}
+      - {name: tick_count, kind: attribute, returns: Integer, doc: "The current game tick."}
+      - name: new_entity
+        kind: method
+        returns: GTK::Entity
+        doc: "Creates a new entity with optional name, type, and initial properties."
+        params:
+          - {name: name, kind: keyword, type: Symbol}
+          - {name: type, kind: keyword, type: Symbol}
+          - {name: properties, kind: rest, type: Hash}
+      - name: new_entity_hash
+        kind: method
+        returns: Hash
+        doc: "Creates a new entity and returns it as a Hash."
+        params:
+          - {name: properties, kind: rest, type: Hash}
+
+  - name: GTK::Entity
+    open: true
+    doc: "A dynamic object whose properties can be read and written with method syntax, including nested values."
+    members:
+      - {name: entity_id, kind: attribute, returns: Integer, doc: "Unique identifier assigned to this entity."}
+      - {name: entity_type, kind: attribute, returns: Symbol, doc: "Optional symbol describing what this entity represents."}
+      - {name: created_at, kind: attribute, returns: Integer, doc: "Kernel.tick_count when this entity was created."}
+      - {name: created_at_elapsed, kind: attribute, returns: Integer, doc: "Number of ticks since this entity was created."}
+      - {name: global_created_at, kind: attribute, returns: Integer, doc: "Kernel.global_tick_count when this entity was created."}
+      - {name: global_created_at_elapsed, kind: attribute, returns: Integer, doc: "Number of global ticks since this entity was created."}
+      - {name: as_hash, kind: attribute, returns: Hash, doc: "This entity cast to a Hash so values can be updated hash-style."}
+      - {name: tick_count, kind: attribute, returns: Integer, doc: "The current game tick."}
+      - {name: x, kind: attribute, returns: Numeric, doc: "X position when the entity represents an event such as a mouse click."}
+      - {name: y, kind: attribute, returns: Numeric, doc: "Y position when the entity represents an event such as a mouse click."}
+      - name: inside_rect?
+        kind: method
+        returns: Boolean
+        doc: "True if the entity's position is inside the given rect."
+        params: [{name: rect, kind: required, type: Object}]
+      - name: inside_circle?
+        kind: method
+        returns: Boolean
+        doc: "True if the entity's position is inside the circle described by center and radius."
+        params:
+          - {name: center, kind: required, type: Object}
+          - {name: radius, kind: required, type: Numeric}
