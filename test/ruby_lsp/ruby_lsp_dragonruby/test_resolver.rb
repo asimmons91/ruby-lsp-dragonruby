@@ -6,6 +6,7 @@ module RubyLsp
   module Dragonruby
     class TestResolver < Minitest::Test
       include RegistryTestHelper
+      include NodeContextHelper
 
       TYPES = <<~YAML
         types:
@@ -150,7 +151,86 @@ module RubyLsp
         assert_equal "GTK::Args", resolution.type.name
       end
 
+      def test_macro_accessor_roots_resolve_bare_calls
+        resolution = resolve_indexed(<<~RUBY)
+          class Game
+            attr_gtk
+            def tick
+              inputs.keyboa‸rd
+            end
+          end
+        RUBY
+
+        assert_equal "GTK::Keyboard", resolution.type.name
+      end
+
+      def test_macro_accessor_roots_resolve_self_calls
+        resolution = resolve_indexed(<<~RUBY)
+          class Game
+            attr_gtk
+            def tick
+              self.inputs.keyboa‸rd
+            end
+          end
+        RUBY
+
+        assert_equal "GTK::Keyboard", resolution.type.name
+      end
+
+      def test_macro_accessor_roots_work_for_subclasses
+        resolution = resolve_indexed(<<~RUBY)
+          class Base
+            attr_gtk
+          end
+          class Child < Base
+            def tick
+              stat‸e
+            end
+          end
+        RUBY
+
+        assert_equal "GTK::State", resolution.type.name
+      end
+
+      def test_shared_accessor_names_use_the_applied_macro
+        registry = load_registry(valid_files.merge("macros.yml" => SHARED_MACROS))
+        index = RubyIndexer::Index.new
+        IndexingEnhancement.registry = registry
+        index.index_single(URI("file:///test.rb"), "class Game\n  attr_other\n  def tick\n    args\n  end\nend\n")
+
+        context = locate_context("class Game\n  attr_other\n  def tick\n    ar‸gs\n  end\nend\n", adjust: 0)
+        resolution = Resolver.new(registry, index: index).resolve(context.node, context)
+
+        assert_equal "GTK::Inputs", resolution.type.name
+      ensure
+        IndexingEnhancement.registry = nil
+      end
+
+      def test_macro_accessor_roots_require_the_macro
+        resolution = resolve_indexed(<<~RUBY)
+          class Game
+            def tick
+              inputs.keyboa‸rd
+            end
+          end
+        RUBY
+
+        assert_predicate resolution, :unknown?
+      end
+
       private
+
+      def resolve_indexed(source)
+        registry = load_registry(valid_files)
+        index = RubyIndexer::Index.new
+        IndexingEnhancement.registry = registry
+        index.index_single(URI("file:///test.rb"), source.delete(NodeContextHelper::CURSOR))
+
+        context = locate_context(source, adjust: 0)
+        Resolver.new(registry, index: index).resolve(context.node, context)
+      ensure
+        IndexingEnhancement.registry = nil
+      end
 
       def expression(source)
         statements = Prism.parse(source).value.statements.body

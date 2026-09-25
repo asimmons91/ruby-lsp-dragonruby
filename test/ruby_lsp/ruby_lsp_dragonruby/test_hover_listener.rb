@@ -6,6 +6,7 @@ module RubyLsp
   module Dragonruby
     class TestHoverListener < Minitest::Test
       include RegistryTestHelper
+      include NodeContextHelper
 
       def setup
         @registry = load_registry(files_with_runtime)
@@ -101,6 +102,61 @@ module RubyLsp
         assert(@logger.messages.any? { |message| message.include?("boom") })
       end
 
+      def test_primitive_key_hover_shows_type_default_and_doc
+        content = primitive_hover("def tick(args)\n  args.outputs.sprites << { x‸: 0 }\nend\n")
+
+        assert_includes content, "x → Numeric"
+        assert_includes content, "X"
+      end
+
+      def test_primitive_key_hover_shows_allowed_values
+        content = primitive_hover("def tick(args)\n  args.outputs.sprites << { blend_mode_enum‸: 0 }\nend\n")
+
+        assert_includes content, "Default: 0"
+        assert_includes content, "Allowed values: 0, 1"
+      end
+
+      def test_primitive_value_hover_produces_nothing
+        content = primitive_hover("def tick(args)\n  args.outputs.sprites << { x: :nop‸e }\nend\n")
+
+        assert_empty content.to_s
+      end
+
+      def test_primitive_key_hover_outside_a_context_produces_nothing
+        content = primitive_hover("x = { x‸: 0 }\n")
+
+        assert_empty content.to_s
+      end
+
+      def test_attr_gtk_accessor_hover
+        content = macro_hover("class Game\n  attr_gtk\n  def tick\n    inp‸uts\n  end\nend\n")
+
+        assert_includes content, "inputs → GTK::Inputs"
+        assert_includes content, "The inputs"
+        assert_includes content, "Provided by `attr_gtk`."
+      end
+
+      def test_attr_sprite_accessor_hover
+        content = macro_hover("class Player\n  attr_sprite\n  def tick\n    sel‸f.w\n  end\nend\n")
+
+        assert_includes content, "w → Numeric"
+        assert_includes content, "Provided by `attr_sprite`."
+      end
+
+      def test_macro_accessor_hover_without_the_macro_produces_nothing
+        content = macro_hover("class Game\n  def tick\n    inp‸uts\n  end\nend\n")
+
+        assert_empty content.to_s
+      end
+
+      def test_macro_accessor_hover_prefers_the_applied_macro
+        source = "class Game\n  attr_other\n  def tick\n    arg‸s\n  end\nend\n"
+        content = macro_hover(source, files: valid_files.merge("macros.yml" => SHARED_MACROS))
+
+        assert_includes content, "args → GTK::Inputs"
+        refute_includes content, "args → GTK::Args"
+      end
+
       private
 
       def dispatch_hover(source)
@@ -108,6 +164,41 @@ module RubyLsp
         first = statements.first
         node = first.is_a?(Prism::DefNode) ? first.body.body.first : statements.first
         @dispatcher.dispatch_once(node)
+      end
+
+      def primitive_hover(source)
+        builder = ResponseBuilders::Hover.new
+        dispatcher = Prism::Dispatcher.new
+        context = locate_context(
+          source,
+          adjust: 0,
+          node_types: RubyLsp::Listeners::Hover::ALLOWED_TARGETS
+        )
+        Listeners::Hover.new(builder, load_primitive_registry, context, dispatcher, logger: @logger)
+        dispatcher.dispatch_once(context.node) if context.node
+        builder.response
+      end
+
+      def macro_hover(source, files: valid_files)
+        registry = load_registry(files)
+        index = RubyIndexer::Index.new
+        IndexingEnhancement.registry = registry
+
+        clean = source.delete(CURSOR)
+        context = locate_context(
+          source,
+          adjust: 0,
+          node_types: RubyLsp::Listeners::Hover::ALLOWED_TARGETS
+        )
+        index.index_single(URI("file:///test.rb"), clean)
+
+        builder = ResponseBuilders::Hover.new
+        dispatcher = Prism::Dispatcher.new
+        Listeners::Hover.new(builder, registry, context, dispatcher, logger: @logger, index: index)
+        dispatcher.dispatch_once(context.node) if context.node
+        builder.response
+      ensure
+        IndexingEnhancement.registry = nil
       end
     end
   end

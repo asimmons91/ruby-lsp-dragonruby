@@ -5,6 +5,7 @@ require "ruby_lsp/addon"
 require_relative "../../ruby_lsp_dragonruby/version"
 require_relative "../../ruby_lsp_dragonruby/logger"
 require_relative "../../ruby_lsp_dragonruby/registry"
+require_relative "../../ruby_lsp_dragonruby/indexing_enhancement"
 require_relative "../../ruby_lsp_dragonruby/chain"
 require_relative "../../ruby_lsp_dragonruby/resolution"
 require_relative "../../ruby_lsp_dragonruby/roots"
@@ -22,6 +23,7 @@ module RubyLsp
         super()
         @logger = logger || Logger.new
         @registry = nil
+        @index = nil
       end
 
       def name
@@ -32,15 +34,19 @@ module RubyLsp
         VERSION
       end
 
-      def activate(_global_state, _outgoing_queue)
+      def activate(global_state, _outgoing_queue)
         @registry = Registry.load(logger: @logger)
+        @index = global_state&.index
+        IndexingEnhancement.registry = @registry
       rescue => error
         @logger.error("#{error.class}: #{error.message}")
         add_error(error)
       end
 
       def deactivate
+        IndexingEnhancement.registry = nil
         @registry = nil
+        @index = nil
         Registry.reset!
       rescue => error
         add_error(error)
@@ -55,7 +61,8 @@ module RubyLsp
           node_context,
           dispatcher,
           uri,
-          logger: @logger
+          logger: @logger,
+          index: @index
         )
       rescue => error
         @logger.error("#{error.class}: #{error.message}")
@@ -64,7 +71,14 @@ module RubyLsp
       def create_hover_listener(response_builder, node_context, dispatcher)
         return unless @registry
 
-        Listeners::Hover.new(response_builder, @registry, node_context, dispatcher, logger: @logger)
+        Listeners::Hover.new(
+          response_builder,
+          @registry,
+          node_context,
+          dispatcher,
+          logger: @logger,
+          index: @index
+        )
       rescue => error
         @logger.error("#{error.class}: #{error.message}")
       end

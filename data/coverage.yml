@@ -71,3 +71,11 @@ areas:
     title: "State (args.state)"
     docs: "https://docs.dragonruby.org/#/api/state"
     types: [GTK::State, GTK::Entity]
+  - id: primitives
+    title: "Primitive schemas"
+    docs: "https://docs.dragonruby.org/#/api/outputs"
+    schemas: [sprite, label, solid, border, line, screenshot]
+  - id: macros
+    title: "Class macros"
+    docs: "https://docs.dragonruby.org/#/api/runtime"
+    macros: [attr_gtk, attr_sprite]

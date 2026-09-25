@@ -9,13 +9,14 @@ module RubyLsp
         MEMBER_KINDS = %w[attribute method].freeze
         PARAM_KINDS = %w[required optional keyword rest block].freeze
 
-        Result = Data.define(:issues, :types, :schemas, :metadata, :name_lists)
+        Result = Data.define(:issues, :types, :schemas, :macros, :metadata, :name_lists)
 
         def initialize(documents)
           @documents = documents
           @issues = []
           @types = {}
           @schemas = {}
+          @macros = {}
           @name_lists = {}
           @type_names = Set.new
           @schema_names = Set.new
@@ -25,17 +26,20 @@ module RubyLsp
           collect_name_lists
           collect_types
           collect_schemas
+          collect_macros
           @type_names = @types.keys.to_set
           @schema_names = @schemas.keys.to_set
           metadata = validate_metadata
 
           specs = prune_types
           schema_specs = prune_schemas
+          macro_specs = prune_macros
 
           Result.new(
             issues: @issues,
             types: specs,
             schemas: schema_specs,
+            macros: macro_specs,
             metadata: metadata,
             name_lists: @name_lists
           )
@@ -135,6 +139,29 @@ module RubyLsp
           end
         end
 
+        def collect_macros
+          @documents.macro_entries.each do |entry|
+            raw = entry.raw
+            unless raw.is_a?(Hash)
+              issue(path_for(entry, "macros"), "macro entry must be a mapping")
+              next
+            end
+
+            name = raw["name"]
+            path = path_for(entry, "macros[#{name || "?"}]")
+            unless name.is_a?(String) && !name.empty?
+              issue(path, "missing required field `name`")
+              next
+            end
+            if @macros.key?(name)
+              issue(path, "duplicate macro name `#{name}`")
+              next
+            end
+
+            @macros[name] = entry
+          end
+        end
+
         def validate_metadata
           entry = @documents.metadata_entry
           unless entry
@@ -205,10 +232,19 @@ module RubyLsp
 
           accepts = raw["accepts_primitive"]
           if accepts
-            if accepts.is_a?(String) && @schema_names.include?(accepts)
-              spec["accepts_primitive"] = accepts
+            names =
+              if accepts.is_a?(String)
+                [accepts]
+              elsif accepts.is_a?(Array)
+                accepts
+              else
+                []
+              end
+            dangling = names.find { |name| !name.is_a?(String) || !@schema_names.include?(name) }
+            if names.any? && dangling.nil?
+              spec["accepts_primitive"] = names
             else
-              issue(path, "dangling accepts_primitive reference `#{accepts}`")
+              issue(path, "dangling accepts_primitive reference `#{dangling || accepts}`")
             end
           end
 
@@ -471,6 +507,94 @@ module RubyLsp
             entry["allowed_values"] = allowed if allowed
             entry.delete("path")
             entry
+          end
+        end
+
+        def prune_macros
+          specs = {}
+          @macros.each do |name, entry|
+            spec = prune_macro(entry)
+            specs[name] = spec if spec
+          end
+          specs
+        end
+
+        def prune_macro(entry)
+          raw = entry.raw
+          name = raw["name"]
+          path = path_for(entry, "macros[#{name}]")
+          spec = {"name" => name}
+
+          spec["doc"] = raw["doc"] if raw["doc"].is_a?(String)
+          spec["aliases"] = normalize_macro_aliases(raw["aliases"], path)
+
+          primitive = raw["primitive"]
+          if primitive
+            unless primitive.is_a?(String) && @schema_names.include?(primitive)
+              issue(path, "dangling primitive reference `#{primitive}`")
+              return nil
+            end
+            if Array(raw["accessors"]).any?
+              issue(path, "primitive-backed macro cannot declare accessors")
+              return nil
+            end
+
+            spec["primitive"] = primitive
+            return spec
+          end
+
+          accessors = raw["accessors"]
+          unless accessors.is_a?(Array) && accessors.any?
+            issue(path, "missing required field `accessors`")
+            return nil
+          end
+
+          spec["accessors"] = validate_accessors(accessors, path)
+          return nil if spec["accessors"].empty?
+
+          spec
+        end
+
+        def normalize_macro_aliases(raw, path)
+          return [] unless raw
+
+          unless raw.is_a?(Array)
+            issue(path, "`aliases` must be a list")
+            return []
+          end
+
+          raw.select { |value| value.is_a?(String) && !value.empty? }
+        end
+
+        def validate_accessors(accessors, macro_path)
+          seen = {}
+          accessors.filter_map do |accessor|
+            unless accessor.is_a?(Hash)
+              issue(macro_path, "accessor must be a mapping")
+              next
+            end
+
+            name = accessor["name"]
+            path = "#{macro_path}.accessors[#{name || "?"}]"
+            unless name.is_a?(String) && !name.empty?
+              issue(path, "missing required field `name`")
+              next
+            end
+            if seen.key?(name)
+              issue(path, "duplicate accessor name `#{name}`")
+              next
+            end
+            seen[name] = true
+
+            returns = resolve_expression(accessor["returns"], "#{path}.returns")
+            next unless returns
+
+            unless accessor["doc"].is_a?(String) && !accessor["doc"].strip.empty?
+              issue(path, "missing required field `doc`")
+              next
+            end
+
+            {"name" => name, "returns" => returns, "doc" => accessor["doc"]}
           end
         end
 

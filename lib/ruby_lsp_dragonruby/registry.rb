@@ -8,6 +8,8 @@ require_relative "registry/member"
 require_relative "registry/primitive_key"
 require_relative "registry/primitive_schema"
 require_relative "registry/type"
+require_relative "registry/accessor"
+require_relative "registry/macro"
 require_relative "registry/name_list"
 require_relative "registry/family_expansion"
 require_relative "registry/validator"
@@ -56,12 +58,13 @@ module RubyLsp
         end
       end
 
-      attr_reader :metadata, :types, :schemas
+      attr_reader :metadata, :types, :schemas, :macros
 
-      def initialize(metadata:, types:, schemas:)
+      def initialize(metadata:, types:, schemas:, macros: {})
         @metadata = metadata
         @types = types.freeze
         @schemas = schemas.freeze
+        @macros = macros.freeze
         @core_types = CORE_TYPES.to_set.freeze
         freeze
       end
@@ -72,6 +75,22 @@ module RubyLsp
 
       def schema(name)
         @schemas[name]
+      end
+
+      def macro(name)
+        @macros[name]
+      end
+
+      # The macros callable under any of their names or aliases.
+      def macros_for_call_name(name)
+        @macros.values.select { |macro| macro.all_names.include?(name) }
+      end
+
+      # The primitive schemas accepted by a collection type.
+      def primitive_schemas_for(type)
+        return [] unless type&.accepts_primitive
+
+        type.accepts_primitive.filter_map { |name| @schemas[name] }
       end
 
       def type_names

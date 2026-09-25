@@ -12,7 +12,7 @@ module RubyLsp
           @parent_name = parent_name
           @members = members.freeze
           @ancestors = ancestors.freeze
-          @accepts_primitive = accepts_primitive
+          @accepts_primitive = accepts_primitive&.freeze
           @open = open
           @incomplete = incomplete
           @doc = doc

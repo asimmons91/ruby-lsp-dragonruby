@@ -1,0 +1,22 @@
+macros:
+  - name: attr_gtk
+    aliases: [attr_dr]
+    doc: "Adds DragonRuby environment accessors to a class or module so args does not have to be passed around. Also known as attr_dr."
+    accessors:
+      - {name: args, returns: GTK::Args, doc: "The current args object graph."}
+      - {name: state, returns: GTK::State, doc: "Persistent property bag that lives across ticks."}
+      - {name: inputs, returns: GTK::Inputs, doc: "Keyboard, mouse, controller, and touch input state for the current tick."}
+      - {name: outputs, returns: GTK::Outputs, doc: "Render collections and render targets."}
+      - {name: grid, returns: Grid, doc: "Screen and canvas information such as width, height, origin, and orientation."}
+      - {name: geometry, returns: Geometry, doc: "Geometry helpers for vectors, angles, rectangles, collisions, and transforms."}
+      - {name: gtk, returns: GTK::Runtime, doc: "The DragonRuby runtime object."}
+      - {name: layout, returns: Layout, doc: "Helpers for placing UI on a 24 by 12 virtual grid inside the safe area."}
+      - {name: audio, returns: GTK::Audio, doc: "Hash-like collection of playing sounds and music."}
+      - {name: easing, returns: Easing, doc: "Easing functions that map tick counts to animation percentages."}
+      - {name: events, returns: GTK::Events, doc: "Raw engine events and window resize notifications."}
+      - {name: runtime, returns: GTK::Runtime, doc: "The DragonRuby runtime object, also available as gtk."}
+      - {name: passes, returns: Hash, doc: "Render passes and diagnostics primitives collected for the current tick."}
+
+  - name: attr_sprite
+    doc: "Adds every sprite render property to a class so instances can be pushed to args.outputs.sprites directly."
+    primitive: sprite

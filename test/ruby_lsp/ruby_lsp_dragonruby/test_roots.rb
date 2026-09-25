@@ -49,8 +49,9 @@ module RubyLsp
         assert_nil @roots.resolve(Prism.parse("Nope").value.statements.body.first)
       end
 
-      def test_default_strategies_cover_parameter_global_and_constant
-        assert_equal [Roots::Parameter, Roots::Global, Roots::RegistryConstant], Roots::DEFAULT_STRATEGIES
+      def test_default_strategies_cover_parameter_global_constant_and_macro
+        assert_equal [Roots::Parameter, Roots::Global, Roots::RegistryConstant, Roots::MacroAccessor],
+          Roots::DEFAULT_STRATEGIES
       end
     end
   end

@@ -4,6 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "ruby-lsp-dragonruby"
 require "ruby_lsp/internal"
 require "ruby_lsp/test_helper"
+require "ruby_lsp_dragonruby/indexing_enhancement"
 require "ruby_lsp_dragonruby/listeners/completion"
 require "ruby_lsp_dragonruby/listeners/hover"
 
@@ -74,6 +75,81 @@ module RegistryTestHelper
         primitive_marker: sprite
         keys:
           - {name: w, type: Numeric, doc: Width, default: 0, allowed_values: [0, 1]}
+          - {name: blend_mode_enum, type: Integer, doc: Blend mode, default: 0, allowed_values: [0, 1]}
+      - name: solid
+        primitive_marker: solid
+        keys:
+          - {name: w, type: Numeric, doc: Width}
+  YAML
+
+  MACROS = <<~YAML
+    macros:
+      - name: attr_gtk
+        aliases: [attr_dr]
+        doc: DragonRuby environment accessors
+        accessors:
+          - {name: args, returns: GTK::Args, doc: The args}
+          - {name: inputs, returns: GTK::Inputs, doc: The inputs}
+          - {name: state, returns: GTK::State, doc: The state}
+      - name: attr_sprite
+        doc: Sprite accessors
+        primitive: sprite
+  YAML
+
+  SHARED_MACROS = <<~YAML
+    macros:
+      - name: attr_gtk
+        accessors:
+          - {name: args, returns: GTK::Args, doc: The args}
+      - name: attr_other
+        accessors:
+          - {name: args, returns: GTK::Inputs, doc: The inputs}
+  YAML
+
+  PRIMITIVE_TYPES = <<~YAML
+    types:
+      - name: GTK::Args
+        members:
+          - {name: outputs, kind: attribute, returns: GTK::Outputs, doc: Outputs}
+      - name: GTK::Outputs
+        members:
+          - {name: sprites, kind: attribute, returns: GTK::Outputs::Sprites, doc: Sprites}
+          - {name: labels, kind: attribute, returns: GTK::Outputs::Labels, doc: Labels}
+          - {name: primitives, kind: attribute, returns: GTK::Outputs::Primitives, doc: Primitives}
+      - name: GTK::Outputs::Collection
+        members:
+          - {name: "<<", kind: method, returns: GTK::Outputs::Collection, doc: Push}
+          - {name: push, kind: method, returns: GTK::Outputs::Collection, doc: Push}
+          - {name: concat, kind: method, returns: GTK::Outputs::Collection, doc: Push}
+      - name: GTK::Outputs::Sprites
+        parent: GTK::Outputs::Collection
+        accepts_primitive: sprite
+        members: []
+      - name: GTK::Outputs::Labels
+        parent: GTK::Outputs::Collection
+        accepts_primitive: label
+        members: []
+      - name: GTK::Outputs::Primitives
+        parent: GTK::Outputs::Collection
+        accepts_primitive: [sprite, label]
+        members: []
+  YAML
+
+  PRIMITIVE_SCHEMAS = <<~YAML
+    schemas:
+      - name: sprite
+        primitive_marker: sprite
+        keys:
+          - {name: x, type: Numeric, doc: X}
+          - {name: y, type: Numeric, doc: Y}
+          - {name: path, type: [String, Symbol], doc: Path}
+          - {name: blend_mode_enum, type: Integer, doc: Blend, default: 0, allowed_values: [0, 1]}
+      - name: label
+        primitive_marker: label
+        keys:
+          - {name: x, type: Numeric, doc: X}
+          - {name: text, type: String, doc: Text}
+          - {name: alignment_enum, type: Integer, doc: Align, default: 0, allowed_values: [0, 1, 2]}
   YAML
 
   RUNTIME = <<~YAML
@@ -115,12 +191,25 @@ module RegistryTestHelper
       "metadata.yml" => METADATA,
       "names.yml" => NAMES,
       "types.yml" => TYPES,
-      "schemas.yml" => SCHEMAS
+      "schemas.yml" => SCHEMAS,
+      "macros.yml" => MACROS
     }
   end
 
   def files_with_runtime
     valid_files.merge("runtime.yml" => RUNTIME)
+  end
+
+  def primitive_files
+    {
+      "metadata.yml" => METADATA,
+      "types.yml" => PRIMITIVE_TYPES,
+      "schemas.yml" => PRIMITIVE_SCHEMAS
+    }
+  end
+
+  def load_primitive_registry
+    load_registry(primitive_files)
   end
 
   def validation_issues(files)
@@ -142,10 +231,40 @@ module RegistryTestHelper
   end
 end
 
+module NodeContextHelper
+  CURSOR = "\u2038"
+
+  # Locates the node context for a source with a cursor marker. Ruby LSP's
+  # completion request adjusts the position back by one, hover does not.
+  def locate_context(source, adjust: -1, node_types: [Prism::CallNode])
+    position = source.index(CURSOR)
+    raise ArgumentError, "source is missing the #{CURSOR.inspect} cursor marker" unless position
+
+    clean = source.delete(CURSOR)
+    global_state = RubyLsp::GlobalState.new
+    document = RubyLsp::RubyDocument.new(
+      source: clean,
+      version: 1,
+      uri: URI("file:///test.rb"),
+      global_state: global_state
+    )
+    RubyLsp::RubyDocument.locate(
+      document.ast,
+      position + adjust,
+      code_units_cache: document.code_units_cache,
+      node_types: node_types
+    )
+  end
+end
+
 module ServerTestHelper
   include RubyLsp::TestHelper
 
   CURSOR = "\u2038"
+
+  def reindex(server, uri, source)
+    server.global_state.index.index_single(uri, source.delete(CURSOR))
+  end
 
   def with_cursor(source, **options)
     clean, line, character = cursor_position(source)
@@ -165,17 +284,22 @@ module ServerTestHelper
     [clean, line, character]
   end
 
-  def completion_items(server, uri, line, character)
+  def completion_items(server, uri, line, character, trigger_character: nil)
+    context = trigger_character ? {triggerCharacter: trigger_character} : nil
     server.process_message(
       id: 1,
       method: "textDocument/completion",
-      params: {textDocument: {uri: uri}, position: {line: line, character: character}}
+      params: {
+        textDocument: {uri: uri},
+        position: {line: line, character: character},
+        context: context
+      }.compact
     )
     pop_result(server).response
   end
 
-  def completion_labels(server, uri, line, character)
-    completion_items(server, uri, line, character).map(&:label)
+  def completion_labels(server, uri, line, character, trigger_character: nil)
+    completion_items(server, uri, line, character, trigger_character: trigger_character).map(&:label)
   end
 
   def hover_content(server, uri, line, character)

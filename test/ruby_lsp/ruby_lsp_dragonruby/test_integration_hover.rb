@@ -42,6 +42,15 @@ module RubyLsp
         end
       end
 
+      def test_primitive_key_hover
+        with_cursor("def tick(args)\n  args.outputs.sprites << { x‸: 0 }\nend\n") do |server, uri, line, character|
+          content = hover_content(server, uri, line, character)
+
+          assert_includes content, "x → Numeric"
+          assert_includes content, "X position."
+        end
+      end
+
       def test_trailing_dot_hover_is_robust
         with_cursor("def tick(args)\n  args.inputs.keyboard.‸\nend\n") do |server, uri, line, character|
           refute_match(/keyboard →/, hover_content(server, uri, line, character).to_s)

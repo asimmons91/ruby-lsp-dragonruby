@@ -100,9 +100,10 @@ schemas:
       - {name: w, type: Numeric, doc: "...", default: 0, allowed_values: [0, 1]}
 ```
 
-The model and validator support keys, defaults, and allowed values, but M1
-ships placeholder schemas with empty key lists. Keys and `accepts_primitive`
-links are curated in M3 (REQ-M1-04, REQ-M3-01/02).
+The model and validator support keys, defaults, and allowed values. M1 shipped
+placeholder schemas with empty key lists; M3 filled them and added the
+`macros` document plus list-valued `accepts_primitive`. See
+`m3-macros-and-primitives.md` for the extended format.
 
 ## Load and validation semantics
 

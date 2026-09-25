@@ -7,7 +7,7 @@ module RubyLsp
   module Dragonruby
     class Registry
       class Loader
-        Documents = Data.define(:type_entries, :schema_entries, :name_list_entries, :metadata_entry)
+        Documents = Data.define(:type_entries, :schema_entries, :macro_entries, :name_list_entries, :metadata_entry)
         Entry = Data.define(:file, :raw)
 
         def initialize(data_dir:, logger: nil)
@@ -40,6 +40,7 @@ module RubyLsp
                 issues: @loader_issues + result.issues,
                 types: result.types,
                 schemas: result.schemas,
+                macros: result.macros,
                 metadata: result.metadata,
                 name_lists: result.name_lists
               )
@@ -50,6 +51,7 @@ module RubyLsp
         def read_documents
           type_entries = []
           schema_entries = []
+          macro_entries = []
           name_list_entries = []
           metadata_entry = nil
 
@@ -69,6 +71,7 @@ module RubyLsp
             end
             Array(data["types"]).each { |raw| type_entries << Entry.new(file: file, raw: raw) }
             Array(data["schemas"]).each { |raw| schema_entries << Entry.new(file: file, raw: raw) }
+            Array(data["macros"]).each { |raw| macro_entries << Entry.new(file: file, raw: raw) }
 
             names = data["names"]
             if names.is_a?(Hash)
@@ -83,6 +86,7 @@ module RubyLsp
           Documents.new(
             type_entries: type_entries,
             schema_entries: schema_entries,
+            macro_entries: macro_entries,
             name_list_entries: name_list_entries,
             metadata_entry: metadata_entry
           )
@@ -99,10 +103,12 @@ module RubyLsp
         end
 
         def build_registry(result)
+          schemas = build_schemas(result.schemas)
           Registry.new(
             metadata: result.metadata,
             types: build_types(result.types),
-            schemas: build_schemas(result.schemas)
+            schemas: schemas,
+            macros: build_macros(result.macros, schemas)
           )
         end
 
@@ -161,6 +167,38 @@ module RubyLsp
               keys: Array(spec["keys"]).map { |raw| build_primitive_key(raw) }
             )
           end
+        end
+
+        def build_macros(specs, schemas)
+          specs.transform_values do |spec|
+            primitive = spec["primitive"]
+            accessors = if primitive
+              schema = schemas[primitive]
+              schema ? schema.keys.map { |key| build_accessor(key) } : []
+            else
+              Array(spec["accessors"]).map { |raw| build_accessor_from_spec(raw) }
+            end
+
+            Macro.new(
+              name: spec["name"],
+              aliases: Array(spec["aliases"]),
+              doc: spec["doc"],
+              primitive: primitive,
+              accessors: accessors
+            )
+          end
+        end
+
+        def build_accessor(key)
+          Accessor.new(name: key.name, returns: key.type, doc: key.doc)
+        end
+
+        def build_accessor_from_spec(raw)
+          Accessor.new(
+            name: raw["name"],
+            returns: Returns.new(raw["returns"]),
+            doc: raw["doc"]
+          )
         end
 
         def build_primitive_key(raw)

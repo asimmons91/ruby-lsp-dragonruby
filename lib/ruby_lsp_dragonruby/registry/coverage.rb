@@ -7,9 +7,14 @@ module RubyLsp
   module Dragonruby
     class Registry
       class Coverage
-        Area = Data.define(:id, :title, :docs, :types, :member_count, :missing_types) do
+        Area = Data.define(
+          :id, :title, :docs, :types, :member_count, :missing_types,
+          :schemas, :missing_schemas, :macros, :missing_macros
+        ) do
           def covered?
-            missing_types.empty? && member_count.positive?
+            return false unless missing_types.empty? && missing_schemas.empty? && missing_macros.empty?
+
+            (types.any? && member_count.positive?) || schemas.any? || macros.any?
           end
         end
 
@@ -23,6 +28,16 @@ module RubyLsp
               type.nil? || type.all_members.empty?
             end
             member_count = types.sum { |name| registry.type(name)&.all_members&.size || 0 }
+            schemas = Array(raw["schemas"])
+            missing_schemas = schemas.select do |name|
+              schema = registry.schema(name)
+              schema.nil? || schema.keys.empty?
+            end
+            macros = Array(raw["macros"])
+            missing_macros = macros.select do |name|
+              macro = registry.macro(name)
+              macro.nil? || macro.accessors.empty?
+            end
 
             Area.new(
               id: raw["id"],
@@ -30,7 +45,11 @@ module RubyLsp
               docs: raw["docs"],
               types: types,
               member_count: member_count,
-              missing_types: missing
+              missing_types: missing,
+              schemas: schemas,
+              missing_schemas: missing_schemas,
+              macros: macros,
+              missing_macros: missing_macros
             )
           end
 
@@ -59,7 +78,7 @@ module RubyLsp
           lines << "DragonRuby registry coverage"
           lines << metadata_line
           lines << ""
-          lines << "M1 areas:"
+          lines << "Coverage areas:"
           @areas.each { |area| lines << format_area(area) }
           lines << ""
           lines << "Curated types: #{type_rows.size}"
@@ -80,15 +99,20 @@ module RubyLsp
 
         def format_area(area)
           status = area.covered? ? "OK" : "MISSING"
-          missing = area.missing_types.empty? ? "" : " missing=[#{area.missing_types.join(", ")}]"
+          missing = []
+          missing << "missing=[#{area.missing_types.join(", ")}]" if area.missing_types.any?
+          missing << "missing schemas=[#{area.missing_schemas.join(", ")}]" if area.missing_schemas.any?
+          missing << "missing macros=[#{area.missing_macros.join(", ")}]" if area.missing_macros.any?
           format(
-            "  %-22s types: %-3d members: %-4d %-8s %s%s",
+            "  %-22s types: %-3d schemas: %-3d macros: %-3d members: %-4d %-8s %s %s",
             area.id,
             area.types.size,
+            area.schemas.size,
+            area.macros.size,
             area.member_count,
             status,
             area.docs,
-            missing
+            missing.join(" ")
           )
         end
 
