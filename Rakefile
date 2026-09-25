@@ -35,4 +35,9 @@ namespace :registry do
   end
 end
 
-task default: %i[test standard registry:validate registry:coverage]
+desc "Run the performance benchmarks and fail when a budget is exceeded"
+task :benchmark do
+  ruby "benchmark/run.rb"
+end
+
+task default: %i[test standard registry:validate registry:coverage benchmark]

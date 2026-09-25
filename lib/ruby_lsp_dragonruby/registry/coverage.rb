@@ -9,9 +9,11 @@ module RubyLsp
       class Coverage
         Area = Data.define(
           :id, :title, :docs, :types, :member_count, :missing_types,
-          :schemas, :missing_schemas, :macros, :missing_macros
+          :schemas, :missing_schemas, :macros, :missing_macros, :deferred
         ) do
           def covered?
+            return true if deferred
+
             return false unless missing_types.empty? && missing_schemas.empty? && missing_macros.empty?
 
             (types.any? && member_count.positive?) || schemas.any? || macros.any?
@@ -49,7 +51,8 @@ module RubyLsp
               schemas: schemas,
               missing_schemas: missing_schemas,
               macros: macros,
-              missing_macros: missing_macros
+              missing_macros: missing_macros,
+              deferred: raw["deferred"]&.to_s
             )
           end
 
@@ -98,11 +101,18 @@ module RubyLsp
         end
 
         def format_area(area)
-          status = area.covered? ? "OK" : "MISSING"
+          status = if area.deferred
+            "DEFERRED"
+          elsif area.covered?
+            "OK"
+          else
+            "MISSING"
+          end
           missing = []
           missing << "missing=[#{area.missing_types.join(", ")}]" if area.missing_types.any?
           missing << "missing schemas=[#{area.missing_schemas.join(", ")}]" if area.missing_schemas.any?
           missing << "missing macros=[#{area.missing_macros.join(", ")}]" if area.missing_macros.any?
+          missing << "deferred: #{area.deferred}" if area.deferred
           format(
             "  %-22s types: %-3d schemas: %-3d macros: %-3d members: %-4d %-8s %s %s",
             area.id,

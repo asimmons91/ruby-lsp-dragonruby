@@ -43,6 +43,15 @@ module RubyLsp
             types: [GTK::Inputs]
       YAML
 
+      COVERAGE_DEFERRED = <<~YAML
+        areas:
+          - id: deferred_area
+            title: Deferred area
+            docs: "https://example.com"
+            deferred: "No public engine release to diff yet"
+            types: [GTK::Missing]
+      YAML
+
       def test_reports_covered_and_missing_areas
         files = valid_files.merge("coverage.yml" => COVERAGE)
         with_registry(files) do |registry, dir|
@@ -82,6 +91,21 @@ module RubyLsp
           assert area.covered?
           assert_empty area.missing_types
           assert_equal 2, area.member_count
+        end
+      end
+
+      def test_deferred_area_is_covered_and_reported_with_its_reason
+        files = valid_files.merge("coverage.yml" => COVERAGE_DEFERRED)
+        with_registry(files) do |registry, dir|
+          coverage = Registry::Coverage.call(registry, data_dir: dir)
+          area = coverage.areas.first
+
+          assert coverage.covered?
+          assert_empty coverage.incomplete
+          assert area.covered?
+          assert_equal "No public engine release to diff yet", area.deferred
+          assert_includes coverage.to_s, "DEFERRED"
+          assert_includes coverage.to_s, "deferred: No public engine release to diff yet"
         end
       end
     end

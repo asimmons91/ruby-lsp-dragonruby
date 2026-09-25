@@ -13,12 +13,19 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    name: Ruby ${{ matrix.ruby }} / ruby-lsp ${{ matrix.ruby-lsp }}
     strategy:
+      fail-fast: false
       matrix:
         ruby:
           - '4.0'
           - '3.4'
+        ruby-lsp:
+          - '0.26.0'
+          - '~> 0.26.0'
+
+    env:
+      RUBY_LSP_VERSION: ${{ matrix.ruby-lsp }}
 
     steps:
       - uses: actions/checkout@v6
@@ -28,6 +35,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
+      - name: Install dependencies
+        run: bundle install
       - name: Run the default task
         run: bundle exec rake
