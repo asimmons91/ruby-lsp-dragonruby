@@ -2,6 +2,10 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "ruby-lsp-dragonruby"
+require "ruby_lsp/internal"
+require "ruby_lsp/test_helper"
+require "ruby_lsp_dragonruby/listeners/completion"
+require "ruby_lsp_dragonruby/listeners/hover"
 
 require "minitest/autorun"
 require "tmpdir"
@@ -72,6 +76,14 @@ module RegistryTestHelper
           - {name: w, type: Numeric, doc: Width, default: 0, allowed_values: [0, 1]}
   YAML
 
+  RUNTIME = <<~YAML
+    types:
+      - name: GTK::Runtime
+        doc: The runtime
+        members:
+          - {name: args, kind: attribute, returns: GTK::Args, doc: The args, docs_url: "https://docs.dragonruby.org/#/api/runtime"}
+  YAML
+
   def quiet_logger
     RubyLsp::Dragonruby::Logger.new(StringIO.new)
   end
@@ -107,6 +119,10 @@ module RegistryTestHelper
     }
   end
 
+  def files_with_runtime
+    valid_files.merge("runtime.yml" => RUNTIME)
+  end
+
   def validation_issues(files)
     with_data(files) do |dir|
       RubyLsp::Dragonruby::Registry::Loader.new(data_dir: dir).validation_issues
@@ -123,5 +139,51 @@ module RegistryTestHelper
 
   def error_messages(issues)
     issues.select(&:error?).map(&:message)
+  end
+end
+
+module ServerTestHelper
+  include RubyLsp::TestHelper
+
+  CURSOR = "\u2038"
+
+  def with_cursor(source, **options)
+    clean, line, character = cursor_position(source)
+    with_server(clean, **options) do |server, uri|
+      yield server, uri, line, character
+    end
+  end
+
+  def cursor_position(source)
+    index = source.index(CURSOR)
+    raise ArgumentError, "source is missing the #{CURSOR.inspect} cursor marker" unless index
+
+    clean = source.delete(CURSOR)
+    before = source[0...index]
+    line = before.count("\n")
+    character = before.split("\n", -1).last.length
+    [clean, line, character]
+  end
+
+  def completion_items(server, uri, line, character)
+    server.process_message(
+      id: 1,
+      method: "textDocument/completion",
+      params: {textDocument: {uri: uri}, position: {line: line, character: character}}
+    )
+    pop_result(server).response
+  end
+
+  def completion_labels(server, uri, line, character)
+    completion_items(server, uri, line, character).map(&:label)
+  end
+
+  def hover_content(server, uri, line, character)
+    server.process_message(
+      id: 1,
+      method: "textDocument/hover",
+      params: {textDocument: {uri: uri}, position: {line: line, character: character}}
+    )
+    pop_result(server).response&.contents&.value
   end
 end

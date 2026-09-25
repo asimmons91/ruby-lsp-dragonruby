@@ -150,11 +150,10 @@ M1 and the minimal M0 prerequisites (add-on entry point, logger, `ruby-lsp`
 dependency, registry load at activation) landed before the M0 spikes. This was
 an explicit decision: the M1 loader, validator, coverage tooling, and curated
 data do not depend on any spike outcome, so the registry work could proceed
-independently. The six spike decisions in `docs/decisions/` remain unwritten.
+independently. M0-S1 and M0-S2 were since decided alongside M2.
 
 Still open from M0 and later milestones:
 
-- M0-S1 through M0-S6 have no written decisions yet.
-- `with_server` integration tests (REQ-TEST-01/02) arrive with the M2 features.
+- M0-S3 through M0-S6 have no written decisions yet.
 - CI runs a Ruby version matrix, not the low/high `ruby-lsp` range required by
   REQ-TEST-03.

@@ -16,9 +16,9 @@ module RubyLsp
           @open = open
           @incomplete = incomplete
           @doc = doc
-          @members_by_name = @members.to_h { |member| [member.name, member] }.freeze
+          @members_by_name = index_members(@members)
           @all_members = (members + ancestors.flat_map(&:members)).uniq(&:name).freeze
-          @all_members_by_name = @all_members.to_h { |member| [member.name, member] }.freeze
+          @all_members_by_name = index_members(@all_members)
           freeze
         end
 
@@ -40,6 +40,16 @@ module RubyLsp
 
         def incomplete?
           @incomplete
+        end
+
+        private
+
+        def index_members(members)
+          members.each_with_object({}) do |member, index|
+            ([member.name] + member.aliases).each do |name|
+              index[name] ||= member
+            end
+          end.freeze
         end
       end
     end
