@@ -155,6 +155,7 @@ independently. M0-S1 and M0-S2 were since decided alongside M2.
 
 Still open from M0 and later milestones:
 
-- M0-S3 through M0-S6 have no written decisions yet.
+- M0-S3 and M0-S5 have no written decisions yet. M0-S4 is decided in
+  `m0-s4-stub-indexing.md` (resolver fallback for core extensions).
 - CI runs a Ruby version matrix, not the low/high `ruby-lsp` range required by
   REQ-TEST-03.

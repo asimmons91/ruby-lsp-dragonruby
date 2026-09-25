@@ -7,7 +7,7 @@ module RubyLsp
         attr_reader :name, :parent_name, :members, :all_members, :accepts_primitive, :ancestors, :doc
 
         def initialize(name:, parent_name: nil, members: [], accepts_primitive: nil, open: false,
-          incomplete: false, doc: nil, ancestors: [])
+          incomplete: false, core_extension: false, doc: nil, ancestors: [])
           @name = name
           @parent_name = parent_name
           @members = members.freeze
@@ -15,6 +15,7 @@ module RubyLsp
           @accepts_primitive = accepts_primitive&.freeze
           @open = open
           @incomplete = incomplete
+          @core_extension = core_extension
           @doc = doc
           @members_by_name = index_members(@members)
           @all_members = (members + ancestors.flat_map(&:members)).uniq(&:name).freeze
@@ -40,6 +41,12 @@ module RubyLsp
 
         def incomplete?
           @incomplete
+        end
+
+        # A type that curates DragonRuby's additions to a core Ruby class
+        # (`Numeric`, `Hash`, ...) rather than a DragonRuby-owned type.
+        def core_extension?
+          @core_extension
         end
 
         private

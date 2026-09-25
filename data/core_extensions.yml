@@ -1,0 +1,515 @@
+# DragonRuby's additions to core Ruby classes (REQ-M6-01).
+#
+# The `geometry_mixins` anchor holds the Geometry methods that the docs say
+# are mixed into Hash, Array, and Entity. Each member is anchored so Array can
+# combine them with its own extensions. Geometry curates its own copy in
+# geometry.yml because the module signatures take the receiver as a parameter.
+
+geometry_mixins: &geometry_mixins
+  - &mix_intersect_rect
+    name: intersect_rect?
+    kind: method
+    returns: Boolean
+    doc: "True if this rect intersects the other rect, with an optional overlap tolerance defaulting to 0.1."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=intersect_rect"
+    params:
+      - {name: other, kind: required, type: Object}
+      - {name: tolerance, kind: optional, type: Numeric}
+  - &mix_inside_rect
+    name: inside_rect?
+    kind: method
+    returns: Boolean
+    doc: "True if this rect is entirely inside the given rect."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=inside_rect"
+    params:
+      - {name: other, kind: required, type: Object}
+  - &mix_scale_rect
+    name: scale_rect
+    kind: method
+    returns: Hash
+    doc: "New rect scaled by the given ratio from the given anchor, defaulting to the top-left."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=scale_rect"
+    params:
+      - {name: ratio, kind: required, type: Numeric}
+      - {name: anchor_x, kind: optional, type: Numeric}
+      - {name: anchor_y, kind: optional, type: Numeric}
+  - &mix_angle_to
+    name: angle_to
+    kind: method
+    returns: Float
+    doc: "Angle in degrees from this point to the end point."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=angle_to"
+    params:
+      - {name: end_point, kind: required, type: Object}
+  - &mix_angle_from
+    name: angle_from
+    kind: method
+    returns: Float
+    doc: "Angle in degrees from the end point back to this point."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=angle_from"
+    params:
+      - {name: end_point, kind: required, type: Object}
+  - &mix_point_inside_circle
+    name: point_inside_circle?
+    kind: method
+    returns: Boolean
+    doc: "True if this point is inside the circle described by center and radius."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=point_inside_circle"
+    params:
+      - {name: circle_center, kind: required, type: Object}
+      - {name: circle_radius, kind: optional, type: Numeric}
+  - &mix_center_inside_rect
+    name: center_inside_rect
+    kind: method
+    returns: Hash
+    doc: "New rect centered inside the reference rect."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=center_inside_rect"
+    params:
+      - {name: reference_rect, kind: required, type: Object}
+  - &mix_anchor_rect
+    name: anchor_rect
+    kind: method
+    returns: Hash
+    doc: "New rect anchored by the given anchor_x and anchor_y values."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=anchor_rect"
+    params:
+      - {name: anchor_x, kind: required, type: Numeric}
+      - {name: anchor_y, kind: required, type: Numeric}
+  - &mix_rect_center_point
+    name: rect_center_point
+    kind: method
+    returns: Hash
+    doc: "Center point of this rect as x and y."
+    docs_url: "https://docs.dragonruby.org/#/api/geometry?id=rect_center_point"
+
+types:
+  - name: Numeric
+    core_extension: true
+    open: true
+    doc: "DragonRuby's additions to Numeric. Integer and Float inherit them."
+    members:
+      - name: frame
+        kind: method
+        returns: Hash
+        doc: "Frame animation state for an animation started at this tick, including frame_index, started, and completed."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=frame"
+        params:
+          - {name: count, kind: required, type: Integer}
+          - {name: hold_for, kind: required, type: Integer}
+          - {name: repeat, kind: optional, type: Boolean}
+          - {name: repeat_index, kind: keyword, type: Integer}
+          - {name: tick_count_override, kind: keyword, type: Integer}
+      - name: frame_index
+        kind: method
+        returns: Integer
+        scope: both
+        doc: "Index of the current frame for an animation started at this tick, or nil when out of bounds."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=frame_index"
+        params:
+          - {name: count, kind: required, type: Integer}
+          - {name: hold_for, kind: required, type: Integer}
+          - {name: repeat, kind: optional, type: Boolean}
+          - {name: repeat_index, kind: keyword, type: Integer}
+          - {name: tick_count_override, kind: keyword, type: Integer}
+      - name: rand
+        kind: method
+        returns: Numeric
+        scope: class
+        doc: "Returns a random number in 0..1, 0...max, or a Range when one is given."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=rand"
+        params:
+          - {name: max_or_range, kind: optional, type: Object}
+      - name: elapsed_time
+        kind: method
+        returns: Integer
+        doc: "Frames elapsed since this tick number, using Kernel.tick_count unless an override is given."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=elapsed_time"
+        params:
+          - {name: time_override, kind: optional, type: Integer}
+      - name: elapsed?
+        kind: method
+        returns: Boolean
+        doc: "True when elapsed_time for this tick number is past the optional offset."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=elapsed"
+        params:
+          - {name: offset, kind: optional, type: Numeric}
+      - name: to_sf
+        kind: method
+        returns: String
+        doc: "String float representation of this number with two decimal places."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=to_sf"
+      - name: to_si
+        kind: method
+        returns: String
+        doc: "String integer representation of this number with underscores as thousands separators."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=to_si"
+      - name: vector_x
+        kind: method
+        returns: Float
+        doc: "X component of the unit vector for this angle in degrees."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=vector_x"
+      - name: vector_y
+        kind: method
+        returns: Float
+        doc: "Y component of the unit vector for this angle in degrees."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=vector_y"
+      - name: vector_x_r
+        kind: method
+        returns: Float
+        doc: "X component of the unit vector for this angle in radians."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=vector_x"
+      - name: vector_y_r
+        kind: method
+        returns: Float
+        doc: "Y component of the unit vector for this angle in radians."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=vector_y"
+      - name: idiv
+        kind: method
+        returns: Integer
+        doc: "Integer division of this number by the divisor."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=idiv"
+        params:
+          - {name: divisor, kind: required, type: Numeric}
+      - name: fdiv
+        kind: method
+        returns: Float
+        doc: "Floating point division of this number by the divisor."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=fdiv"
+        params:
+          - {name: divisor, kind: required, type: Numeric}
+      - name: zmod?
+        kind: method
+        returns: Boolean
+        doc: "True when this number modulo the divisor is zero."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=zmod"
+        params:
+          - {name: divisor, kind: required, type: Numeric}
+      - name: lerp
+        kind: method
+        returns: Numeric
+        doc: "Moves this number a step towards the target, optionally snapping within a tolerance."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=lerp"
+        params:
+          - {name: target, kind: required, type: Numeric}
+          - {name: step, kind: required, type: Numeric}
+          - {name: tolerance, kind: keyword, type: Numeric}
+      - name: remap
+        kind: method
+        returns: Numeric
+        doc: "Remaps this number from one range to another."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=remap"
+        params:
+          - {name: r1_begin, kind: required, type: Numeric}
+          - {name: r1_end, kind: required, type: Numeric}
+          - {name: r2_begin, kind: required, type: Numeric}
+          - {name: r2_end, kind: required, type: Numeric}
+      - name: clamp
+        kind: method
+        returns: Numeric
+        doc: "Clamps this number between the minimum and maximum values."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=clamp"
+        params:
+          - {name: min, kind: required, type: Numeric}
+          - {name: max, kind: required, type: Numeric}
+      - name: clamp_wrap
+        kind: method
+        returns: Numeric
+        doc: "Clamps this number between the minimum and maximum values, wrapping around instead of stopping."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=clamp_wrap"
+        params:
+          - {name: min, kind: required, type: Numeric}
+          - {name: max, kind: required, type: Numeric}
+      - name: mid
+        kind: method
+        returns: Numeric
+        doc: "Returns this number when it is between l and r, otherwise the nearest bound."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=mid"
+        params:
+          - {name: l, kind: keyword, type: Numeric}
+          - {name: r, kind: keyword, type: Numeric}
+      - name: mid?
+        kind: method
+        returns: Boolean
+        doc: "True when this number is between l and r."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=between"
+        params:
+          - {name: l, kind: keyword, type: Numeric}
+          - {name: r, kind: keyword, type: Numeric}
+      - name: between?
+        kind: method
+        returns: Boolean
+        doc: "True when this number falls between the minimum and maximum values."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=between"
+        params:
+          - {name: min, kind: required, type: Numeric}
+          - {name: max, kind: required, type: Numeric}
+      - name: min
+        kind: method
+        returns: Numeric
+        doc: "Returns the smaller of this number and the other value."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=min"
+        params:
+          - {name: other, kind: required, type: Numeric}
+      - name: max
+        kind: method
+        returns: Numeric
+        doc: "Returns the larger of this number and the other value."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=max"
+        params:
+          - {name: other, kind: required, type: Numeric}
+      - name: times
+        kind: method
+        returns: Unknown
+        doc: "Executes the block this many times."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=times"
+        params:
+          - {kind: block, type: Object}
+      - name: map
+        kind: method
+        returns: Array
+        doc: "Returns the block result for each index from zero up to this number."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=map"
+        params:
+          - {kind: block, type: Object}
+      - name: seconds
+        kind: method
+        returns: Integer
+        doc: "Converts this number of seconds to frames at 60fps."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=seconds"
+      - name: to_degrees
+        kind: method
+        returns: Float
+        doc: "Converts this number from radians to degrees."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=to_degrees"
+        aliases: [to_d, to_degrees_from_radians]
+      - name: to_radians
+        kind: method
+        returns: Float
+        doc: "Converts this number from degrees to radians."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=to_radians"
+        aliases: [to_r, to_radians_from_degrees]
+      - name: compose_blendmode
+        kind: method
+        returns: Object
+        scope: class
+        doc: "Builds a custom blend mode from color and alpha factors and operations."
+        docs_url: "https://docs.dragonruby.org/#/api/numeric?id=compose_blendmode"
+        params:
+          - {name: src_color_factor, kind: required, type: Integer}
+          - {name: dst_color_factor, kind: required, type: Integer}
+          - {name: color_operation, kind: required, type: Integer}
+          - {name: src_alpha_factor, kind: required, type: Integer}
+          - {name: dst_alpha_factor, kind: required, type: Integer}
+          - {name: alpha_operation, kind: required, type: Integer}
+
+  - name: Integer
+    core_extension: true
+    open: true
+    parent: Numeric
+    doc: "Integer inherits DragonRuby's Numeric extensions."
+    members: []
+
+  - name: Float
+    core_extension: true
+    open: true
+    parent: Numeric
+    doc: "Float inherits DragonRuby's Numeric extensions."
+    members: []
+
+  - name: Array
+    core_extension: true
+    open: true
+    doc: "DragonRuby's additions to Array, including the Geometry mixins."
+    members:
+      - name: map_2d
+        kind: method
+        returns: Array
+        doc: "Calls the block with row, column, and tile for each item of an array of arrays."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=map_2d"
+        params:
+          - {kind: block, type: Object}
+      - name: include_any?
+        kind: method
+        returns: Boolean
+        doc: "True if any item of this array exists in the given collection of items."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=include_any"
+        params:
+          - {name: items, kind: rest, type: Object}
+      - name: any_intersect_rect?
+        kind: method
+        returns: Boolean
+        doc: "True if any element that responds to rect properties intersects the given rect."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=any_intersect_rect"
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: tolerance, kind: keyword, type: Numeric}
+      - name: reject_nil
+        kind: method
+        returns: Array
+        doc: "Returns a copy of this array without nil items."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=reject_nil"
+      - name: reject_false
+        kind: method
+        returns: Array
+        doc: "Returns a copy of this array without nil or false items."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=reject_false"
+      - name: product
+        kind: method
+        returns: Array
+        doc: "Returns all combinations of values between this array and another array."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=product"
+        params:
+          - {name: other, kind: optional, type: Array}
+      - name: all?
+        kind: method
+        returns: Boolean
+        scope: class
+        doc: "Class-level variant that returns true when the block is truthy for every item."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: any?
+        kind: method
+        returns: Boolean
+        scope: class
+        doc: "Class-level variant that returns true when the block is truthy for any item."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: compact!
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that removes nil items in place."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+      - name: compact
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that returns a copy without nil items."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+      - name: each
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that calls the block for each item."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: each_with_index
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that calls the block with each item and its index."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: filter_map
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that keeps block results that are truthy."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: find_all
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that returns every item for which the block is truthy."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: flat_map
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that maps and flattens one level."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: map!
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that maps in place."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: map
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that returns the block result for each item."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: map_with_index
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that maps with the item index available."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: reject!
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that removes items for which the block is truthy, in place."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: reject
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that returns items for which the block is falsey."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: select!
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that keeps items for which the block is truthy, in place."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: select
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that returns items for which the block is truthy."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+        params:
+          - {kind: block, type: Object}
+      - name: transpose
+        kind: method
+        returns: Array
+        scope: class
+        doc: "Class-level variant that swaps rows and columns."
+        docs_url: "https://docs.dragonruby.org/#/api/array?id=array-class-methods"
+      - *mix_intersect_rect
+      - *mix_inside_rect
+      - *mix_scale_rect
+      - *mix_angle_to
+      - *mix_angle_from
+      - *mix_point_inside_circle
+      - *mix_center_inside_rect
+      - *mix_anchor_rect
+      - *mix_rect_center_point
+
+  - name: Hash
+    core_extension: true
+    open: true
+    doc: "DragonRuby mixes the Geometry rect helpers into Hash."
+    members: *geometry_mixins
+
+  - name: Kernel
+    core_extension: true
+    open: true
+    doc: "DragonRuby's tick helpers on Kernel, callable bare or as Kernel.tick_count."
+    members:
+      - {name: tick_count, kind: attribute, returns: Integer, scope: both, doc: "Frames elapsed since the game started, excluding time spent paused.", docs_url: "https://docs.dragonruby.org/#/api/runtime"}
+      - {name: global_tick_count, kind: attribute, returns: Integer, scope: both, doc: "Total frames elapsed since the runtime started, including resets.", docs_url: "https://docs.dragonruby.org/#/api/runtime"}

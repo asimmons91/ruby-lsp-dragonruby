@@ -164,6 +164,48 @@ module RegistryTestHelper
           - {name: args, kind: attribute, returns: GTK::Args, doc: The args, docs_url: "https://docs.dragonruby.org/#/api/runtime"}
   YAML
 
+  CORE_TYPES = <<~YAML
+    types:
+      - name: GTK::Args
+        members:
+          - {name: score, kind: attribute, returns: Integer, doc: Score}
+      - name: Numeric
+        core_extension: true
+        members:
+          - {name: seconds, kind: method, returns: Integer, doc: Seconds}
+          - {name: frame_index, kind: method, returns: Integer, scope: both, doc: Frame}
+          - name: clamp
+            kind: method
+            returns: Numeric
+            doc: Clamp
+            params:
+              - {name: min, kind: required, type: Numeric}
+              - {name: max, kind: required, type: Numeric}
+      - name: Integer
+        core_extension: true
+        parent: Numeric
+        members: []
+      - name: Hash
+        core_extension: true
+        members:
+          - name: intersect_rect?
+            kind: method
+            returns: Boolean
+            doc: Intersect
+            params: [{name: other, kind: required, type: Object}]
+      - name: Kernel
+        core_extension: true
+        members:
+          - {name: tick_count, kind: attribute, returns: Integer, scope: both, doc: Tick}
+  YAML
+
+  CORE_ACCESSOR_MACROS = <<~YAML
+    macros:
+      - name: attr_dr
+        accessors:
+          - {name: passes, returns: Hash, doc: Passes}
+  YAML
+
   def quiet_logger
     RubyLsp::Dragonruby::Logger.new(StringIO.new)
   end
@@ -214,6 +256,21 @@ module RegistryTestHelper
 
   def load_primitive_registry
     load_registry(primitive_files)
+  end
+
+  def core_files
+    {
+      "metadata.yml" => METADATA,
+      "core.yml" => CORE_TYPES
+    }
+  end
+
+  def load_core_registry
+    load_registry(core_files)
+  end
+
+  def core_macro_files
+    core_files.merge("macros.yml" => CORE_ACCESSOR_MACROS)
   end
 
   def validation_issues(files)

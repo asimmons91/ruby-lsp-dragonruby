@@ -279,6 +279,63 @@ module RubyLsp
         assert_empty dispatch_at(source)
       end
 
+      def test_literal_receiver_offers_core_extensions
+        items = dispatch_at("def tick(args)\n  5.‸\nend\n", registry: load_core_registry)
+        labels = items.map(&:label)
+
+        assert_includes labels, "seconds"
+        assert_includes labels, "frame_index"
+      end
+
+      def test_core_extension_items_carry_the_dragonruby_label
+        item = dispatch_at("def tick(args)\n  5.sec‸onds\nend\n", registry: load_core_registry).first
+
+        assert_equal "seconds", item.label
+        assert_equal "DragonRuby", item.label_details.description
+        assert_equal "Integer", item.detail
+      end
+
+      def test_stock_ruby_methods_are_not_offered_as_extensions
+        labels = dispatch_at("def tick(args)\n  5.‸\nend\n", registry: load_core_registry).map(&:label)
+
+        refute_includes labels, "clamp"
+      end
+
+      def test_core_extensions_apply_to_registry_core_returns
+        labels = dispatch_at("def tick(args)\n  args.score.‸\nend\n", registry: load_core_registry).map(&:label)
+
+        assert_includes labels, "seconds"
+      end
+
+      def test_constant_roots_offer_class_scope_extensions
+        labels = dispatch_at("Numeric.‸\n", registry: load_core_registry).map(&:label)
+
+        assert_includes labels, "frame_index"
+        refute_includes labels, "seconds"
+      end
+
+      def test_core_extension_completion_exists_filter_by_typed_name
+        labels = dispatch_at("def tick(args)\n  5.sec‸\nend\n", registry: load_core_registry).map(&:label)
+
+        assert_equal ["seconds"], labels
+      end
+
+      def test_bare_kernel_call_offers_kernel_members
+        items = dispatch_at("def tick(args)\n  tick_co‸\nend\n", registry: load_core_registry)
+        labels = items.map(&:label)
+
+        assert_equal ["tick_count"], labels
+        assert_equal "DragonRuby", items.first.label_details.description
+      end
+
+      def test_macro_accessor_returning_a_core_type_uses_instance_scope
+        source = "class Game\n  attr_dr\n  def tick\n    passes.‸\n  end\nend\n"
+
+        labels = dispatch_macro(source).map(&:label)
+
+        assert_includes labels, "intersect_rect?"
+      end
+
       private
 
       def dispatch(source)
@@ -303,6 +360,31 @@ module RubyLsp
         )
         dispatcher.dispatch_once(context.node) if context.node
         builder.response
+      end
+
+      def dispatch_macro(source)
+        registry = load_registry(core_macro_files)
+        index = RubyIndexer::Index.new
+        IndexingEnhancement.registry = registry
+        clean = source.delete(CURSOR)
+        context = locate_context(source)
+        index.index_single(URI("file:///test.rb"), clean)
+
+        builder = ResponseBuilders::CollectionResponseBuilder.new
+        dispatcher = Prism::Dispatcher.new
+        Listeners::Completion.new(
+          builder,
+          registry,
+          context,
+          dispatcher,
+          URI("file:///test.rb"),
+          logger: @logger,
+          index: index
+        )
+        dispatcher.dispatch_once(context.node) if context.node
+        builder.response
+      ensure
+        IndexingEnhancement.registry = nil
       end
 
       def dispatch_primitive(source)

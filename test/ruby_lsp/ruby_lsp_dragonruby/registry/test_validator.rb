@@ -377,6 +377,67 @@ module RubyLsp
         assert_includes error_messages(issues), "name list entry is missing a `name`"
       end
 
+      def test_core_extension_flag_is_built
+        type_yaml = <<~YAML
+          types:
+            - name: Numeric
+              core_extension: true
+              members:
+                - {name: seconds, kind: method, returns: Integer, doc: Seconds}
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml})
+
+        assert_predicate registry.type("Numeric"), :core_extension?
+        assert_predicate registry.core_extension_type("Numeric"), :core_extension?
+        assert_nil registry.core_extension_type("GTK::Args")
+      end
+
+      def test_core_extension_on_a_non_core_name_warns
+        type_yaml = <<~YAML
+          types:
+            - name: GTK::Thing
+              core_extension: true
+              members:
+                - {name: ok, kind: attribute, returns: Boolean, doc: Ok}
+        YAML
+        issues = issues_for(type_yaml)
+        warnings = issues.select(&:warning?).map(&:message)
+
+        assert_empty error_messages(issues)
+        assert_includes warnings, "core_extension type `GTK::Thing` must be a core type"
+      end
+
+      def test_invalid_member_scope_drops_member
+        type_yaml = <<~YAML
+          types:
+            - name: GTK::Thing
+              members:
+                - {name: bad, kind: attribute, returns: Boolean, doc: Bad, scope: global}
+        YAML
+        assert_includes error_messages(issues_for(type_yaml)), "invalid scope `global`"
+      end
+
+      def test_member_scopes_default_to_instance
+        type_yaml = <<~YAML
+          types:
+            - name: Numeric
+              core_extension: true
+              members:
+                - {name: seconds, kind: method, returns: Integer, doc: Seconds}
+                - {name: frame_index, kind: method, returns: Integer, scope: both, doc: Frame}
+                - {name: rand, kind: method, returns: Numeric, scope: class, doc: Random}
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml})
+        numeric = registry.type("Numeric")
+
+        assert numeric.member("seconds").offered_for?(:instance)
+        refute numeric.member("seconds").offered_for?(:class)
+        assert numeric.member("frame_index").offered_for?(:instance)
+        assert numeric.member("frame_index").offered_for?(:class)
+        assert numeric.member("rand").offered_for?(:class)
+        refute numeric.member("rand").offered_for?(:instance)
+      end
+
       def test_union_with_one_unresolved_name_drops_member
         type_yaml = <<~YAML
           types:

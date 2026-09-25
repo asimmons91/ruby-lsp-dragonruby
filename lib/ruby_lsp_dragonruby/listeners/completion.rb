@@ -7,6 +7,7 @@ require_relative "../primitive_context"
 require_relative "../resolution"
 require_relative "../resolver"
 require_relative "../signature"
+require_relative "../standard_methods"
 
 module RubyLsp
   module Dragonruby
@@ -41,7 +42,7 @@ module RubyLsp
         def handle(node)
           return unless node.is_a?(Prism::CallNode)
           return if handle_primitive(node)
-
+          return handle_bare_call(node) unless node.receiver
           return unless Chain.completable?(node)
 
           receiver, filter = Chain.target(node)
@@ -52,18 +53,100 @@ module RubyLsp
           return unless range
 
           if resolution.resolved_type?
-            push_members(resolution.type, filter, range)
-            push_state_children("", filter, range) if @registry.state_type?(resolution.type)
+            if resolution.type.core_extension?
+              scope = class_receiver?(receiver) ? :class : :instance
+              push_core_extension_members(resolution.type.name, filter, range, scope: scope)
+            else
+              push_members(resolution.type, filter, range)
+              push_state_children("", filter, range) if @registry.state_type?(resolution.type)
+            end
+          elsif resolution.core?
+            push_core_extension_members(resolution.core_type, filter, range, scope: :instance)
           elsif resolution.state_path?
             push_state_members(resolution.state_path, filter, range)
           end
         end
 
+        # `Kernel` helpers are callable without a receiver, so a bare call name
+        # completes the curated Kernel members at an instance position.
+        def handle_bare_call(node)
+          return unless @registry.core_extension_type("Kernel")
+
+          name = node.name.to_s
+          return if name.empty?
+
+          range = range_from_location(node.message_loc)
+          return unless range
+
+          push_core_extension_members("Kernel", name, range, scope: :instance)
+        end
+
+        # Core extensions resolve through the constant root strategy for class
+        # receivers; macro accessors that return a core type are instance
+        # receivers even though their resolution carries the extension type.
+        def class_receiver?(node)
+          case node
+          when Prism::ConstantReadNode, Prism::ConstantPathNode
+            true
+          when Prism::ParenthesesNode
+            body = node.body
+            body.is_a?(Prism::StatementsNode) && body.body.size == 1 && class_receiver?(body.body.first)
+          else
+            false
+          end
+        end
+
         # A state sub-path behaves like an entity: its curated members are
-        # offered alongside the known child paths (REQ-M5-08).
+        # offered alongside the known child paths (REQ-M5-08) and any core
+        # extensions of its inferred types (REQ-M6-03).
         def push_state_members(path, filter, range)
           push_members(@registry.entity_type, filter, range) if @registry.entity_type
+          push_state_core_extensions(path, filter, range)
           push_state_children(path, filter, range)
+        end
+
+        def push_state_core_extensions(path, filter, range)
+          entry = @state&.entry(path)
+          return unless entry
+
+          offered = {}
+          entry.types.each do |type_name|
+            push_core_extension_members(type_name, filter, range, scope: :instance, offered: offered)
+          end
+        end
+
+        # Curated additions to a core Ruby class. Stock Ruby methods are never
+        # offered (REQ-M6-06), and members declare whether they apply to
+        # instance or class receivers.
+        def push_core_extension_members(core_name, filter, range, scope:, offered: nil)
+          extension = @registry.core_extension_type(core_name)
+          return unless extension
+
+          offered ||= {}
+          existing = @response_builder.response.map(&:label)
+
+          extension.all_members.each do |member|
+            next unless member.offered_for?(scope)
+
+            member.signatures.each do |name|
+              next if standard_method?(core_name, name, scope)
+              next unless name.start_with?(filter)
+              next if existing.include?(name) || offered[name]
+
+              offered[name] = true
+              @response_builder << build_item(member, name, range)
+            end
+          end
+
+          offered
+        end
+
+        def standard_method?(core_name, name, scope)
+          if scope == :class
+            StandardMethods.standard_class_method?(core_name, name)
+          else
+            StandardMethods.standard_instance_method?(core_name, name)
+          end
         end
 
         def handle_primitive(node)
