@@ -15,14 +15,16 @@ module RubyLsp
       class Hover
         include Requests::Support::Common
 
-        def initialize(response_builder, registry, node_context, dispatcher, logger: nil, index: nil)
+        def initialize(response_builder, registry, node_context, dispatcher, logger: nil, index: nil, state: nil)
           @response_builder = response_builder
           @registry = registry
           @node_context = node_context
           @logger = logger
           @index = index
-          @resolver = Resolver.new(registry, index: index)
+          @state = state
+          @resolver = state&.resolver || Resolver.new(registry, index: index)
 
+          state&.ensure_workspace_scanned
           dispatcher.register(
             self,
             :on_call_node_enter,
@@ -85,9 +87,32 @@ module RubyLsp
           return false unless node.receiver
 
           resolution = @resolver.resolve(node.receiver, @node_context)
-          return false unless resolution.resolved_type?
 
-          member = resolution.type.member(node.name.to_s)
+          member = resolution.type&.member(node.name.to_s)
+          if member
+            push_member(member)
+            return true
+          end
+
+          handle_state_member(node)
+        end
+
+        # Shows the inferred types and write sites of a known state path
+        # (REQ-M5-09). Writes answer first; an unwritten sub-path falls back to
+        # the curated entity member of the hovered name.
+        def handle_state_member(node)
+          return false unless @state
+
+          path = @state.state_path_for(node, @node_context)
+          return false if path.nil? || path.empty?
+
+          entry = @state.entry_with_context(path, @node_context)
+          if entry
+            push_state(path, entry)
+            return true
+          end
+
+          member = @registry.entity_type&.member(node.name.to_s)
           return false unless member
 
           push_member(member)
@@ -149,6 +174,23 @@ module RubyLsp
           content = +member.doc.to_s
           content << "\n\n[DragonRuby docs](#{member.docs_url})" if member.docs_url
           @response_builder.push(content, category: :documentation) unless content.empty?
+        end
+
+        def push_state(path, entry)
+          @response_builder.push(signature_block(path, entry.types.join(" | ")), category: :title)
+
+          count = entry.write_count
+          suffix = (count == 1) ? "" : "s"
+          content = "#{count} write site#{suffix}."
+          first = entry.first_initialization
+          content << "\n\nFirst initialized at `#{format_site(first)}`." if first
+          @response_builder.push(content, category: :documentation)
+        end
+
+        def format_site(site)
+          return "line #{site.line + 1}" unless site.uri
+
+          "#{site.uri}:#{site.line + 1}"
         end
 
         def push_accessor(macro, accessor, name)

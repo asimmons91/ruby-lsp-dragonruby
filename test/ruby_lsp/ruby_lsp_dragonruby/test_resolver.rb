@@ -14,6 +14,7 @@ module RubyLsp
             members:
               - {name: inputs, kind: attribute, returns: GTK::Inputs, doc: Inputs}
               - {name: outputs, kind: attribute, returns: GTK::Outputs, doc: Outputs}
+              - {name: state, kind: attribute, returns: GTK::State, doc: State}
               - {name: mystery, kind: method, returns: Unknown, doc: Mystery}
               - {name: score, kind: method, returns: [Integer, Float], doc: Score}
           - name: GTK::Inputs
@@ -51,6 +52,19 @@ module RubyLsp
           - name: Geometry
             members:
               - {name: angle_to, kind: method, returns: Float, doc: Angle}
+          - name: GTK::State
+            open: true
+            members:
+              - {name: new_entity, kind: method, returns: GTK::Entity, doc: Entity}
+          - name: GTK::Entity
+            open: true
+            members:
+              - {name: x, kind: attribute, returns: Numeric, doc: X}
+              - name: inside_rect?
+                kind: method
+                returns: Boolean
+                doc: Inside
+                params: [{name: rect, kind: required, type: Object}]
       YAML
 
       class SelfRoot < Roots::Strategy
@@ -373,7 +387,98 @@ module RubyLsp
         assert_predicate @resolver.resolve(read, nil), :unknown?
       end
 
+      def test_state_root_resolves_to_the_state_type
+        resolution = resolve_at_cursor("def tick(args)\n  args.sta‸te\nend")
+
+        assert_equal "GTK::State", resolution.type.name
+      end
+
+      def test_unknown_state_members_resolve_to_a_state_path
+        resolution = resolve_at_cursor("def tick(args)\n  args.state.play‸er\nend")
+
+        assert_predicate resolution, :state_path?
+        assert_equal "player", resolution.state_path
+        assert_predicate resolution, :confident?
+        refute_predicate resolution, :resolved_type?
+      end
+
+      def test_nested_state_paths_extend
+        resolution = resolve_at_cursor("def tick(args)\n  args.state.player.hi‸t\nend")
+
+        assert_equal "player.hit", resolution.state_path
+      end
+
+      def test_state_alias_resolves_to_a_state_path
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            s = args.state
+            s.play‸er
+          end
+        RUBY
+
+        assert_equal "player", resolution.state_path
+      end
+
+      def test_state_sub_path_alias_extends
+        resolution = resolve_at_cursor(<<~RUBY)
+          def tick(args)
+            p = args.state.player
+            p.hi‸t
+          end
+        RUBY
+
+        assert_equal "player.hit", resolution.state_path
+      end
+
+      def test_known_state_paths_win_over_curated_entity_members
+        store = StateStore.new
+        store.replace("file:///test.rb", [
+          StateStore::Record.new(
+            path: "player.x",
+            parent: "player",
+            site: StateStore::WriteSite.new(
+              uri: "file:///test.rb", line: 0, character: 0, end_line: 0, end_character: 1,
+              kind: :initialization, type_name: "Integer"
+            )
+          )
+        ])
+        resolver = Resolver.new(@registry, state_store: store)
+
+        result = resolve_with(resolver, "def tick(args)\n  args.state.player.‸x\nend")
+
+        assert_equal "player.x", result.state_path
+      end
+
+      def test_argument_calls_on_state_paths_stop_resolution
+        resolution = resolve_at_cursor("def tick(args)\n  args.state.player.no‸pe(1)\nend")
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_state_calls_with_arguments_stop_resolution
+        resolution = resolve_at_cursor("def tick(args)\n  args.state.play‸er(1)\nend")
+
+        assert_predicate resolution, :unknown?
+      end
+
+      def test_entity_members_on_state_paths_resolve_through_the_registry
+        resolution = resolve_at_cursor("def tick(args)\n  args.state.player.inside_re‸ct?(:r)\nend")
+
+        assert_equal "Boolean", resolution.core_type
+      end
+
+      def test_curated_state_members_win_over_paths
+        resolution = resolve_at_cursor("def tick(args)\n  args.state.new_ent‸ity\nend")
+
+        assert_equal "GTK::Entity", resolution.type.name
+      end
+
       private
+
+      def resolve_with(resolver, source)
+        context = locate_context(source, adjust: 0, node_types: [Prism::CallNode])
+        resolver.resolve(context.node, context)
+      end
 
       def resolve_at_cursor(source)
         context = locate_context(source, adjust: 0, node_types: [Prism::CallNode])
