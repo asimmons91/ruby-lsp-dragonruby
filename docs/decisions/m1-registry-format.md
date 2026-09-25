@@ -143,3 +143,18 @@ names and revisits them if the engine source confirms different ones:
   above are used where the docs name them; the provisional names are recorded
   so later engine-source confirmation can correct them without changing the
   format.
+
+## Sequencing deviation
+
+M1 and the minimal M0 prerequisites (add-on entry point, logger, `ruby-lsp`
+dependency, registry load at activation) landed before the M0 spikes. This was
+an explicit decision: the M1 loader, validator, coverage tooling, and curated
+data do not depend on any spike outcome, so the registry work could proceed
+independently. The six spike decisions in `docs/decisions/` remain unwritten.
+
+Still open from M0 and later milestones:
+
+- M0-S1 through M0-S6 have no written decisions yet.
+- `with_server` integration tests (REQ-TEST-01/02) arrive with the M2 features.
+- CI runs a Ruby version matrix, not the low/high `ruby-lsp` range required by
+  REQ-TEST-03.
