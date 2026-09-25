@@ -224,7 +224,7 @@ Each spike produces a short written decision in `docs/decisions/`.
 
 - **REQ-M2-10** After a confidently resolved receiver followed by `.`, offer every member of that type (and its parents), filtered by any partial name typed.
 - **REQ-M2-11** Hovering a member name in a confidently resolved chain shows that member's signature, return type, and doc (REQ-UX-01).
-- **REQ-M2-12** Hovering a root (`args` or `$gtk`) shows the root's type and doc.
+- **REQ-M2-12** Hovering a root (`$gtk`, `$args`, or a curated top-level constant) shows the root's type and doc. Hovering a local `args` parameter is not reachable through Ruby LSP's hover target selection in the pinned range (see M0-S1); it is a known limitation until Ruby LSP includes local variables in hover targets.
 - **REQ-M2-13** Apply the de-duplication rule from M0-S2.
 
 #### Acceptance criteria

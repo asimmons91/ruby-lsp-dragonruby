@@ -4,7 +4,7 @@
 
 `ruby-lsp-dragonruby` is a Ruby LSP add-on gem (runs on CRuby inside the LSP server, never inside DragonRuby) for hover/completion/go-to-definition on DragonRuby's `args` API, plus undefined-API warnings.
 
-`docs/requirements_v1.md` is the authoritative spec — read it before implementing. It defines milestones M0–M8, per-requirement IDs (`REQ-*`), and explicit non-goals. M1 (the curated API registry under `data/`, plus loader/validator/coverage tooling) is implemented. The M0 technical spikes (`M0-S1`–`M0-S6`) are still open: they were deliberately deferred when M1 landed, and `docs/decisions/` records the decisions that do exist. Prefer milestone order for new work.
+`docs/requirements_v1.md` is the authoritative spec — read it before implementing. It defines milestones M0–M8, per-requirement IDs (`REQ-*`), and explicit non-goals. M1 (the curated API registry under `data/`, plus loader/validator/coverage tooling) and M2 (receiver resolution, args-tree completion and hover) are implemented. M0-S1 and M0-S2 are decided in `docs/decisions/`; M0-S3–S6 remain open. Prefer milestone order for new work.
 
 ## Commands
 
