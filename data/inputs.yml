@@ -1,0 +1,295 @@
+types:
+  - name: GTK::Inputs
+    doc: "Top level input state. Exposes keyboard, mouse, controllers, touch, and combined directional helpers."
+    members:
+      - {name: last_active, kind: attribute, returns: Symbol, doc: "The input device used most recently: :keyboard, :mouse, or :controller.", docs_url: "https://docs.dragonruby.org/#/api/inputs?id=last_active"}
+      - {name: last_active_at, kind: attribute, returns: Integer, doc: "Kernel.tick_count when the last active input occurred."}
+      - {name: last_active_global_at, kind: attribute, returns: Integer, doc: "Kernel.global_tick_count when the last active input occurred."}
+      - {name: locale, kind: attribute, returns: String, doc: "ISO 639-1 language code reported by the operating system, defaulting to \"en\"."}
+      - {name: up, kind: attribute, returns: Boolean, doc: "True while up is held on the keyboard or controller, or the left analog is tilted up."}
+      - {name: down, kind: attribute, returns: Boolean, doc: "True while down is held on the keyboard or controller, or the left analog is tilted down."}
+      - {name: left, kind: attribute, returns: Boolean, doc: "True while left is held on the keyboard or controller, or the left analog is tilted left."}
+      - {name: right, kind: attribute, returns: Boolean, doc: "True while right is held on the keyboard or controller, or the left analog is tilted right."}
+      - {name: left_right, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 combining arrows, WASD, dpad, and the left analog."}
+      - {name: left_right_with_wasd, kind: attribute, returns: Integer, doc: "Alias of left_right."}
+      - {name: left_right_perc, kind: attribute, returns: Float, doc: "Analog precision between -1.0 and 1.0, falling back to dpad, then WASD and arrows."}
+      - {name: left_right_perc_with_wasd, kind: attribute, returns: Float, doc: "Alias of left_right_perc."}
+      - {name: left_right_dpad, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from arrows and dpad only."}
+      - {name: left_right_arrow, kind: attribute, returns: Integer, doc: "Alias of left_right_dpad."}
+      - {name: left_right_perc_dpad, kind: attribute, returns: Float, doc: "Analog then dpad then arrows, excluding WASD."}
+      - {name: up_down, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 combining arrows, WASD, dpad, and the left analog."}
+      - {name: up_down_with_wasd, kind: attribute, returns: Integer, doc: "Alias of up_down."}
+      - {name: up_down_directional, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from arrows and dpad only."}
+      - {name: up_down_arrow, kind: attribute, returns: Integer, doc: "Alias of up_down_directional."}
+      - {name: up_down_perc, kind: attribute, returns: Float, doc: "Analog then dpad then arrows, excluding WASD."}
+      - {name: text, kind: attribute, returns: Array, doc: "Text entered on the OS keyboard. Requires DR.start_text_input."}
+      - {name: touch, kind: attribute, returns: Hash, doc: "All active touch points on a touch device."}
+      - {name: finger_left, kind: attribute, returns: Hash, doc: "Touch point on the left side of the screen, with x and y."}
+      - {name: finger_right, kind: attribute, returns: Hash, doc: "Touch point on the right side of the screen, with x and y."}
+      - {name: http_requests, kind: attribute, returns: Array, doc: "Pending HTTP requests received by the in-game server started with DR.start_server!."}
+      - {name: keyboard, kind: attribute, returns: GTK::Keyboard, doc: "Keyboard state and key-specific input.", docs_url: "https://docs.dragonruby.org/#/api/inputs?id=keyboard-argskeyboard"}
+      - {name: mouse, kind: attribute, returns: GTK::Mouse, doc: "Mouse position, buttons, wheel, and click events.", docs_url: "https://docs.dragonruby.org/#/api/inputs?id=mouse-argsinputsmouse"}
+      - {name: controllers, kind: attribute, returns: Array, doc: "Controllers one through four as an array.", docs_url: "https://docs.dragonruby.org/#/api/inputs?id=controller-argsinputscontroller_one-four"}
+      - {name: key_down, kind: attribute, returns: GTK::SharedKeys, doc: "Directional key_down shared between the keyboard and controller one."}
+      - {name: key_held, kind: attribute, returns: GTK::SharedKeys, doc: "Directional key_held shared between the keyboard and controller one."}
+      - {name: key_up, kind: attribute, returns: GTK::SharedKeys, doc: "Directional key_up shared between the keyboard and controller one."}
+    generates:
+      - names: controller_numbers
+        members:
+          - {name: "controller_{{name}}", kind: attribute, returns: GTK::Controller, doc: "Controller {{name}} state. Also reachable through controllers."}
+
+  - name: GTK::SharedKeys
+    doc: "Directional accessors shared between the keyboard and controller one."
+    members:
+      - {name: left, kind: attribute, returns: Boolean, doc: "True while left was pressed this frame on the keyboard or controller one."}
+      - {name: right, kind: attribute, returns: Boolean, doc: "True while right was pressed this frame on the keyboard or controller one."}
+      - {name: up, kind: attribute, returns: Boolean, doc: "True while up was pressed this frame on the keyboard or controller one."}
+      - {name: down, kind: attribute, returns: Boolean, doc: "True while down was pressed this frame on the keyboard or controller one."}
+
+  - name: GTK::Keyboard
+    doc: "Keyboard state, directional helpers, and per-key press, hold, release, and repeat queries."
+    members:
+      - {name: active, kind: attribute, returns: Integer, doc: "Kernel.tick_count of the last key press, or nil."}
+      - {name: has_focus, kind: attribute, returns: Boolean, doc: "True while the game window has keyboard focus."}
+      - {name: up, kind: attribute, returns: Boolean, doc: "True while up arrow or W is down or held."}
+      - {name: down, kind: attribute, returns: Boolean, doc: "True while down arrow or S is down or held."}
+      - {name: left, kind: attribute, returns: Boolean, doc: "True while left arrow or A is down or held."}
+      - {name: right, kind: attribute, returns: Boolean, doc: "True while right arrow or D is down or held."}
+      - {name: left_right, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the keyboard's left and right state."}
+      - {name: up_down, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the keyboard's up and down state."}
+      - {name: left_right_wasd, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from A and D only."}
+      - {name: left_right_arrow, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the arrow keys only."}
+      - {name: up_down_wasd, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from W and S only."}
+      - {name: up_down_arrow, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the arrow keys only."}
+      - {name: last_left_right, kind: attribute, returns: Integer, doc: "The left_right value from the previous tick."}
+      - {name: last_up_down, kind: attribute, returns: Integer, doc: "The up_down value from the previous tick."}
+      - {name: directional_vector, kind: attribute, returns: Hash, doc: "Normalized x and y vector from WASD and arrows, or nil."}
+      - {name: directional_vector_wasd, kind: attribute, returns: Hash, doc: "Normalized x and y vector from WASD only, or nil."}
+      - {name: directional_vector_arrow, kind: attribute, returns: Hash, doc: "Normalized x and y vector from the arrow keys only, or nil."}
+      - {name: last_directional_vector, kind: attribute, returns: Hash, doc: "The directional_vector from the previous tick."}
+      - {name: directional_angle, kind: attribute, returns: Float, doc: "Angle in degrees from WASD and arrows, or nil."}
+      - {name: keys, kind: attribute, returns: Hash, doc: "Hash with :down, :held, :down_or_held, :up, and :repeat key sets."}
+      - {name: truthy_keys, kind: attribute, returns: Array, doc: "Symbols for every key currently pressed or held."}
+      - {name: key_down, kind: attribute, returns: GTK::KeyboardKeys, doc: "Keys pressed on this frame only."}
+      - {name: key_held, kind: attribute, returns: GTK::KeyboardKeys, doc: "Keys held on all frames after the initial press."}
+      - {name: key_up, kind: attribute, returns: GTK::KeyboardKeys, doc: "Keys released on this frame only."}
+      - {name: key_repeat, kind: attribute, returns: GTK::KeyboardKeys, doc: "Keys repeated at the operating system key-repeat rate."}
+      - name: key_down?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given key was pressed this frame."
+        params: [{name: key, kind: required, type: Symbol}]
+      - name: key_held?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given key is held."
+        params: [{name: key, kind: required, type: Symbol}]
+      - name: key_up?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given key was released this frame."
+        params: [{name: key, kind: required, type: Symbol}]
+      - name: key_down_or_held?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given key is pressed or held."
+        params: [{name: key, kind: required, type: Symbol}]
+      - name: key_repeat?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given key is repeating."
+        params: [{name: key, kind: required, type: Symbol}]
+    generates:
+      - names: keyboard_keys
+        members:
+          - {name: "{{name}}", kind: attribute, returns: Boolean, doc: "Returns true while the {{name}} key is down or held."}
+      - names: keyboard_ctrl_keys
+        members:
+          - {name: "ctrl_{{name}}", kind: attribute, returns: Boolean, aliases: ["control_{{name}}"], doc: "Returns true while Ctrl+{{name}} is down or held."}
+
+  - name: GTK::KeyboardKeys
+    doc: "Per-key state for a single keyboard event kind such as key_down, key_held, key_up, or key_repeat."
+    members:
+      - {name: char, kind: attribute, returns: String, doc: "ASCII character of the most recent key in this state, or nil."}
+      - {name: keycodes, kind: attribute, returns: Hash, doc: "Raw SDL keycode lookups indexed by keycode number."}
+      - {name: truthy_keys, kind: attribute, returns: Array, doc: "Symbols for every key in this state."}
+      - {name: left_right, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the arrow keys and WASD."}
+      - {name: last_left_right, kind: attribute, returns: Integer, doc: "The left_right value from the previous tick."}
+      - {name: left_right_wasd, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from A and D only."}
+      - {name: last_left_right_wasd, kind: attribute, returns: Integer, doc: "The left_right_wasd value from the previous tick."}
+      - {name: left_right_arrow, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the arrow keys only."}
+      - {name: last_left_right_arrow, kind: attribute, returns: Integer, doc: "The left_right_arrow value from the previous tick."}
+      - {name: up_down, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the arrow keys and WASD."}
+      - {name: last_up_down, kind: attribute, returns: Integer, doc: "The up_down value from the previous tick."}
+      - {name: up_down_wasd, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from W and S only."}
+      - {name: last_up_down_wasd, kind: attribute, returns: Integer, doc: "The up_down_wasd value from the previous tick."}
+      - {name: up_down_arrow, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the arrow keys only."}
+      - {name: last_up_down_arrow, kind: attribute, returns: Integer, doc: "The up_down_arrow value from the previous tick."}
+      - {name: directional_vector, kind: attribute, returns: Hash, doc: "Normalized x and y vector from WASD and arrows, or nil."}
+      - {name: directional_vector_wasd, kind: attribute, returns: Hash, doc: "Normalized x and y vector from WASD only, or nil."}
+      - {name: directional_vector_arrow, kind: attribute, returns: Hash, doc: "Normalized x and y vector from the arrow keys only, or nil."}
+      - {name: last_directional_vector, kind: attribute, returns: Hash, doc: "The directional_vector from the previous tick."}
+      - {name: directional_angle, kind: attribute, returns: Float, doc: "Angle in degrees from WASD and arrows, or nil."}
+    generates:
+      - names: keyboard_keys
+        members:
+          - {name: "{{name}}", kind: attribute, returns: Boolean, doc: "Returns true if the {{name}} key is in this state."}
+      - names: keyboard_directional_keys
+        members:
+          - {name: "{{name}}", kind: attribute, returns: Boolean, doc: "Returns true if the {{name}} arrow key is in this state."}
+      - names: keyboard_ctrl_keys
+        members:
+          - {name: "ctrl_{{name}}", kind: attribute, returns: Boolean, aliases: ["control_{{name}}"], doc: "Returns true if Ctrl+{{name}} is in this state."}
+
+  - name: GTK::Mouse
+    doc: "Mouse position, buttons, wheel, and click events."
+    members:
+      - {name: x, kind: attribute, returns: Numeric, doc: "Current mouse x position in the grid's coordinate system."}
+      - {name: y, kind: attribute, returns: Numeric, doc: "Current mouse y position in the grid's coordinate system."}
+      - {name: previous_x, kind: attribute, returns: Numeric, doc: "Mouse x position on the previous tick."}
+      - {name: previous_y, kind: attribute, returns: Numeric, doc: "Mouse y position on the previous tick."}
+      - {name: relative_x, kind: attribute, returns: Numeric, doc: "Change in mouse x since the previous tick."}
+      - {name: relative_y, kind: attribute, returns: Numeric, doc: "Change in mouse y since the previous tick."}
+      - {name: moved, kind: attribute, returns: Boolean, doc: "True if the mouse moved this tick."}
+      - {name: has_focus, kind: attribute, returns: Boolean, doc: "True while the game window has mouse focus."}
+      - {name: button_bits, kind: attribute, returns: Integer, doc: "Bitmask of mouse buttons, 1 for down and 0 for up."}
+      - {name: wheel, kind: attribute, returns: Hash, doc: "Wheel movement as x and y, or nil if no wheel event occurred."}
+      - {name: click, kind: attribute, returns: GTK::Entity, doc: "Click event with x, y, inside_rect?, and inside_circle?, or nil."}
+      - {name: down, kind: attribute, returns: GTK::Entity, doc: "Held mouse event with x, y, inside_rect?, and inside_circle?, or nil."}
+      - {name: previous_click, kind: attribute, returns: GTK::Entity, doc: "The previous click event, or nil."}
+      - {name: up, kind: attribute, returns: GTK::Entity, doc: "Release event with x, y, inside_rect?, and inside_circle?, or nil."}
+      - {name: key_down, kind: attribute, returns: GTK::MouseKeys, doc: "Mouse buttons pressed on this frame."}
+      - {name: key_held, kind: attribute, returns: GTK::MouseKeys, doc: "Mouse buttons held after the initial press."}
+      - {name: key_up, kind: attribute, returns: GTK::MouseKeys, doc: "Mouse buttons released on this frame."}
+      - {name: buttons, kind: attribute, returns: GTK::MouseButtons, doc: "Per-button click, held, and drag metadata."}
+      - name: rect
+        kind: method
+        returns: Hash
+        doc: "Returns the mouse as a zero-size rect with optional x and y offset."
+        params: [{name: offset, kind: keyword, type: Hash}]
+      - name: point
+        kind: method
+        returns: Hash
+        doc: "Returns the mouse position as a Hash with x and y, with optional offset."
+        params: [{name: offset, kind: keyword, type: Hash}]
+      - name: inside_rect?
+        kind: method
+        returns: Boolean
+        doc: "True if the mouse is inside the given rect, which must respond to x, y, w, and h."
+        params: [{name: rect, kind: required, type: Object}]
+      - name: inside_circle?
+        kind: method
+        returns: Boolean
+        doc: "True if the mouse is inside the circle described by center and radius."
+        params:
+          - {name: center, kind: required, type: Object}
+          - {name: radius, kind: required, type: Numeric}
+    generates:
+      - names: mouse_button_names
+        members:
+          - {name: "button_{{name}}", kind: attribute, returns: Boolean, doc: "True while the {{name}} mouse button is down."}
+
+  - name: GTK::MouseKeys
+    doc: "Per-button mouse state for a single event kind such as key_down, key_held, or key_up."
+    generates:
+      - names: mouse_buttons
+        members:
+          - {name: "{{name}}", kind: attribute, returns: Boolean, doc: "Returns true if the {{name}} mouse button is in this state."}
+
+  - name: GTK::MouseButtons
+    doc: "Metadata for each mouse button, including buffered click and held states."
+    generates:
+      - names: mouse_buttons
+        members:
+          - {name: "{{name}}", kind: attribute, returns: GTK::MouseButton, doc: "Metadata for the {{name}} mouse button."}
+
+  - name: GTK::MouseButton
+    doc: "Click, hold, and release metadata for one mouse button."
+    members:
+      - {name: id, kind: attribute, returns: Symbol, doc: "Button identifier: :left, :middle, :right, :x1, or :x2."}
+      - {name: index, kind: attribute, returns: Integer, doc: "Button index from 0 to 4."}
+      - {name: click, kind: attribute, returns: Boolean, doc: "Truthy if the button was clicked or is down."}
+      - {name: click_at, kind: attribute, returns: Integer, doc: "Kernel.tick_count when the button was clicked."}
+      - {name: global_click_at, kind: attribute, returns: Integer, doc: "Kernel.global_tick_count when the button was clicked."}
+      - {name: up, kind: attribute, returns: Boolean, doc: "Truthy if the button was released."}
+      - {name: up_at, kind: attribute, returns: Integer, doc: "Kernel.tick_count when the button was released."}
+      - {name: global_up_at, kind: attribute, returns: Integer, doc: "Kernel.global_tick_count when the button was released."}
+      - {name: held, kind: attribute, returns: Boolean, doc: "Truthy if the button is held."}
+      - {name: held_at, kind: attribute, returns: Integer, doc: "Kernel.tick_count when the hold started."}
+      - {name: global_held_at, kind: attribute, returns: Integer, doc: "Kernel.global_tick_count when the hold started."}
+      - {name: buffered_click, kind: attribute, returns: Boolean, doc: "True if the button is exclusively a click and not held."}
+      - {name: buffered_held, kind: attribute, returns: Boolean, doc: "True if the button is exclusively held and not a click."}
+
+  - name: GTK::Controller
+    doc: "State for one connected controller, including dpad, analog sticks, face buttons, and key states."
+    members:
+      - {name: connected, kind: attribute, returns: Boolean, doc: "True if a controller is connected. Directional values are 0 and button values are false when disconnected."}
+      - {name: name, kind: attribute, returns: String, doc: "Name reported by the controller."}
+      - {name: active, kind: attribute, returns: Boolean, doc: "True if any of the controller's buttons were used."}
+      - {name: up, kind: attribute, returns: Boolean, doc: "True while up is held on the dpad or left analog."}
+      - {name: down, kind: attribute, returns: Boolean, doc: "True while down is held on the dpad or left analog."}
+      - {name: left, kind: attribute, returns: Boolean, doc: "True while left is held on the dpad or left analog."}
+      - {name: right, kind: attribute, returns: Boolean, doc: "True while right is held on the dpad or left analog."}
+      - {name: left_right, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the controller's left and right state."}
+      - {name: up_down, kind: attribute, returns: Integer, doc: "Returns -1, 0, or 1 from the controller's up and down state."}
+      - {name: directional_vector_dpad, kind: attribute, returns: Hash, doc: "Normalized x and y vector from the dpad, or nil."}
+      - {name: directional_vector_buttons, kind: attribute, returns: Hash, doc: "Normalized vector using face buttons as directions w, e, s, and n."}
+      - {name: directional_vector_left, kind: attribute, returns: Hash, doc: "Normalized vector from the dpad and left analog."}
+      - {name: directional_vector_right, kind: attribute, returns: Hash, doc: "Normalized vector from the right analog, falling back to the face buttons."}
+      - {name: analog_dead_zone, kind: attribute, returns: Integer, doc: "Raw analog threshold below which the stick is considered at rest. Defaults to 3600."}
+      - {name: truthy_keys, kind: attribute, returns: Array, doc: "Symbols for every button currently pressed or held."}
+      - {name: key_down, kind: attribute, returns: GTK::ControllerKeys, doc: "Buttons pressed on this frame only."}
+      - {name: key_held, kind: attribute, returns: GTK::ControllerKeys, doc: "Buttons held after the initial press."}
+      - {name: key_up, kind: attribute, returns: GTK::ControllerKeys, doc: "Buttons released on this frame only."}
+      - name: key_down?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given button was pressed this frame."
+        params: [{name: key, kind: required, type: Symbol}]
+      - name: key_held?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given button is held."
+        params: [{name: key, kind: required, type: Symbol}]
+      - name: key_up?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given button was released this frame."
+        params: [{name: key, kind: required, type: Symbol}]
+      - name: key_down_or_held?
+        kind: method
+        returns: Boolean
+        doc: "Returns true if the given button is pressed or held."
+        params: [{name: key, kind: required, type: Symbol}]
+    generates:
+      - names: controller_buttons
+        members:
+          - {name: "{{name}}", kind: attribute, returns: Boolean, doc: "Returns true while the {{name}} button is down or held."}
+      - names: dpad_directions
+        members:
+          - {name: "dpad_{{name}}", kind: attribute, returns: Boolean, aliases: ["{{name}}_dpad"], doc: "Returns true while {{name}} is held on the dpad only."}
+      - names: analog_sides
+        members:
+          - {name: "{{name}}_analog_x_raw", kind: attribute, returns: Integer, doc: "Raw horizontal value of the {{name}} analog stick from -32767 to 32767."}
+          - {name: "{{name}}_analog_y_raw", kind: attribute, returns: Integer, doc: "Raw vertical value of the {{name}} analog stick from -32767 to 32767."}
+          - {name: "{{name}}_analog_x_perc", kind: attribute, returns: Float, doc: "Horizontal position of the {{name}} analog stick from -1.0 to 1.0."}
+          - {name: "{{name}}_analog_y_perc", kind: attribute, returns: Float, doc: "Vertical position of the {{name}} analog stick from -1.0 to 1.0."}
+          - {name: "{{name}}_analog_angle", kind: attribute, returns: Float, doc: "Angle of the {{name}} analog stick in degrees."}
+          - {name: "directional_vector_{{name}}_analog", kind: attribute, returns: Hash, doc: "Normalized vector from the {{name}} analog stick."}
+          - {name: "directional_vector_{{name}}_analog_cardinal", kind: attribute, returns: Hash, doc: "Cardinal-snapped normalized vector from the {{name}} analog stick, or nil."}
+          - name: "{{name}}_analog_active?"
+            kind: method
+            returns: Boolean
+            doc: "True if the {{name}} analog stick is tilted beyond the given thresholds."
+            params:
+              - {name: threshold_raw, kind: keyword, type: Integer}
+              - {name: threshold_perc, kind: keyword, type: Float}
+
+  - name: GTK::ControllerKeys
+    doc: "Per-button controller state for a single event kind such as key_down, key_held, or key_up."
+    members:
+      - {name: truthy_keys, kind: attribute, returns: Array, doc: "Symbols for every button in this state."}
+    generates:
+      - names: controller_buttons
+        members:
+          - {name: "{{name}}", kind: attribute, returns: Boolean, doc: "Returns true if the {{name}} button is in this state."}

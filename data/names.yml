@@ -1,0 +1,256 @@
+names:
+  keyboard_keys:
+    - a
+    - b
+    - c
+    - d
+    - e
+    - f
+    - g
+    - h
+    - i
+    - j
+    - k
+    - l
+    - m
+    - n
+    - o
+    - p
+    - q
+    - r
+    - s
+    - t
+    - u
+    - v
+    - w
+    - x
+    - y
+    - z
+    - zero
+    - one
+    - two
+    - three
+    - four
+    - five
+    - six
+    - seven
+    - eight
+    - nine
+    - up_arrow
+    - down_arrow
+    - left_arrow
+    - right_arrow
+    - {name: w_scancode, aliases: [up_wasd]}
+    - {name: a_scancode, aliases: [left_wasd]}
+    - {name: s_scancode, aliases: [down_wasd]}
+    - {name: d_scancode, aliases: [right_wasd]}
+    - backspace
+    - delete
+    - tab
+    - enter
+    - escape
+    - space
+    - caps_lock
+    - home
+    - end
+    - {name: pageup, aliases: [page_up]}
+    - {name: pagedown, aliases: [page_down]}
+    - insert
+    - f1
+    - f2
+    - f3
+    - f4
+    - f5
+    - f6
+    - f7
+    - f8
+    - f9
+    - f10
+    - f11
+    - f12
+    - print_screen
+    - scroll_lock
+    - pause
+    - shift
+    - shift_left
+    - shift_right
+    - {name: control, aliases: [ctrl]}
+    - {name: control_left, aliases: [ctrl_left]}
+    - {name: control_right, aliases: [ctrl_right]}
+    - {name: alt, aliases: [option]}
+    - {name: alt_left, aliases: [option_left]}
+    - {name: alt_right, aliases: [option_right]}
+    - {name: meta, aliases: [command]}
+    - {name: meta_left, aliases: [command_left]}
+    - {name: meta_right, aliases: [command_right]}
+    - exclamation_point
+    - at
+    - hash
+    - dollar
+    - percent
+    - caret
+    - ampersand
+    - asterisk
+    - hyphen
+    - equal
+    - plus
+    - underscore
+    - colon
+    - semicolon
+    - comma
+    - period
+    - forward_slash
+    - back_slash
+    - pipe
+    - less_than
+    - greater_than
+    - question_mark
+    - tilde
+    - backtick
+    - single_quotation_mark
+    - double_quotation_mark
+    - section
+    - ordinal_indicator
+    - superscript_two
+    - open_round_brace
+    - close_round_brace
+    - open_curly_brace
+    - close_curly_brace
+    - open_square_brace
+    - close_square_brace
+    - num_lock
+    - kp_zero
+    - kp_one
+    - kp_two
+    - kp_three
+    - kp_four
+    - kp_five
+    - kp_six
+    - kp_seven
+    - kp_eight
+    - kp_nine
+    - kp_period
+    - kp_plus
+    - kp_minus
+    - kp_multiply
+    - kp_divide
+    - kp_enter
+    - kp_equals
+    - ac_back
+    - ac_home
+    - ac_forward
+    - ac_stop
+    - ac_refresh
+    - ac_bookmarks
+    - raw_key
+  keyboard_directional_keys:
+    - up
+    - down
+    - left
+    - right
+  keyboard_ctrl_keys:
+    - a
+    - b
+    - c
+    - d
+    - e
+    - f
+    - g
+    - h
+    - i
+    - j
+    - k
+    - l
+    - m
+    - n
+    - o
+    - p
+    - q
+    - r
+    - s
+    - t
+    - u
+    - v
+    - w
+    - x
+    - y
+    - z
+    - zero
+    - one
+    - two
+    - three
+    - four
+    - five
+    - six
+    - seven
+    - eight
+    - nine
+  mouse_buttons:
+    - left
+    - middle
+    - right
+    - x1
+    - x2
+  mouse_button_names:
+    - left
+    - middle
+    - right
+  controller_numbers:
+    - one
+    - two
+    - three
+    - four
+  controller_buttons:
+    - {name: a, aliases: [s, south, cross]}
+    - {name: b, aliases: [e, east, circle]}
+    - {name: x, aliases: [w, west, square]}
+    - {name: y, aliases: [n, north, triangle]}
+    - l1
+    - r1
+    - l2
+    - r2
+    - l3
+    - r3
+    - start
+    - select
+    - accept
+    - cancel
+  dpad_directions:
+    - up
+    - down
+    - left
+    - right
+  analog_sides:
+    - left
+    - right
+  shader_texture_numbers:
+    - "1"
+    - "2"
+    - "3"
+    - "4"
+    - "5"
+    - "6"
+    - "7"
+    - "8"
+    - "9"
+    - "10"
+    - "11"
+    - "12"
+    - "13"
+    - "14"
+    - "15"
+  grid_px_properties:
+    - left
+    - right
+    - bottom
+    - top
+    - w
+    - h
+    - allscreen_left
+    - allscreen_right
+    - allscreen_top
+    - allscreen_bottom
+    - allscreen_w
+    - allscreen_h
+    - allscreen_offset_x
+    - allscreen_offset_y

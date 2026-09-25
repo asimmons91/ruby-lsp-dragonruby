@@ -1,0 +1,73 @@
+areas:
+  - id: args
+    title: "args"
+    docs: "https://docs.dragonruby.org/#/"
+    types: [GTK::Args]
+  - id: args.inputs
+    title: "Inputs (args.inputs)"
+    docs: "https://docs.dragonruby.org/#/api/inputs"
+    types:
+      - GTK::Inputs
+      - GTK::SharedKeys
+      - GTK::Keyboard
+      - GTK::KeyboardKeys
+      - GTK::Mouse
+      - GTK::MouseKeys
+      - GTK::MouseButtons
+      - GTK::MouseButton
+      - GTK::Controller
+      - GTK::ControllerKeys
+  - id: args.outputs
+    title: "Outputs (args.outputs)"
+    docs: "https://docs.dragonruby.org/#/api/outputs"
+    types:
+      - GTK::Outputs
+      - GTK::Outputs::Collection
+      - GTK::Outputs::Sprites
+      - GTK::Outputs::Labels
+      - GTK::Outputs::Solids
+      - GTK::Outputs::Borders
+      - GTK::Outputs::Lines
+      - GTK::Outputs::Primitives
+      - GTK::Outputs::Debug
+      - GTK::Outputs::StaticSprites
+      - GTK::Outputs::StaticLabels
+      - GTK::Outputs::StaticSolids
+      - GTK::Outputs::StaticBorders
+      - GTK::Outputs::StaticLines
+      - GTK::Outputs::StaticPrimitives
+      - GTK::Outputs::Screenshots
+      - GTK::Outputs::Sounds
+      - GTK::Outputs::RenderTarget
+  - id: args.grid
+    title: "Grid (args.grid)"
+    docs: "https://docs.dragonruby.org/#/api/grid"
+    types: [Grid]
+  - id: args.geometry
+    title: "Geometry (args.geometry)"
+    docs: "https://docs.dragonruby.org/#/api/geometry"
+    types: [Geometry]
+  - id: args.easing
+    title: "Easing (args.easing)"
+    docs: "https://docs.dragonruby.org/#/api/easing"
+    types: [Easing]
+  - id: args.audio
+    title: "Audio (args.audio)"
+    docs: "https://docs.dragonruby.org/#/api/audio"
+    types: [GTK::Audio, GTK::AudioSource]
+  - id: args.gtk
+    title: "Runtime (args.gtk / $gtk)"
+    docs: "https://docs.dragonruby.org/#/api/runtime"
+    types: [GTK::Runtime]
+  - id: args.layout
+    title: "Layout (args.layout)"
+    docs: "https://docs.dragonruby.org/#/api/layout"
+    types: [Layout]
+  - id: args.events
+    title: "Events (args.events)"
+    docs: "https://docs.dragonruby.org/#/api/events"
+    types: [GTK::Events]
+  - id: args.state
+    title: "State (args.state)"
+    docs: "https://docs.dragonruby.org/#/api/state"
+    types: [GTK::State, GTK::Entity]

@@ -1,0 +1,72 @@
+types:
+  - name: Easing
+    doc: "Functions that map a start tick, current tick, and duration to an animation percentage."
+    members:
+      - name: spline
+        kind: method
+        returns: Float
+        doc: "Progress along a bezier spline defined by an array of four-value bezier segments."
+        params:
+          - {name: start_at, kind: required, type: Numeric}
+          - {name: current_tick, kind: required, type: Numeric}
+          - {name: duration, kind: required, type: Numeric}
+          - {name: spline_definition, kind: required, type: Array}
+      - name: smooth_start
+        kind: method
+        returns: Float
+        doc: "Eases in from the start: the percentage changes slowly at first and speeds up. Accepts initial/final/perc or start_at/end_at/duration/tick_count."
+        params:
+          - {name: initial, kind: keyword, type: Numeric}
+          - {name: final, kind: keyword, type: Numeric}
+          - {name: perc, kind: keyword, type: Numeric}
+          - {name: power, kind: keyword, type: Numeric}
+          - {name: flip, kind: keyword, type: Boolean}
+          - {name: start_at, kind: keyword, type: Numeric}
+          - {name: end_at, kind: keyword, type: Numeric}
+          - {name: duration, kind: keyword, type: Numeric}
+          - {name: tick_count, kind: keyword, type: Numeric}
+      - name: smooth_stop
+        kind: method
+        returns: Float
+        doc: "Eases out at the end: the percentage changes quickly at first and slows down. Accepts the same arguments as smooth_start."
+        params:
+          - {name: initial, kind: keyword, type: Numeric}
+          - {name: final, kind: keyword, type: Numeric}
+          - {name: perc, kind: keyword, type: Numeric}
+          - {name: power, kind: keyword, type: Numeric}
+          - {name: flip, kind: keyword, type: Boolean}
+          - {name: start_at, kind: keyword, type: Numeric}
+          - {name: end_at, kind: keyword, type: Numeric}
+          - {name: duration, kind: keyword, type: Numeric}
+          - {name: tick_count, kind: keyword, type: Numeric}
+      - name: smooth_step
+        kind: method
+        returns: Float
+        doc: "Eases in and out: combines smooth_start and smooth_stop. Accepts the same arguments as smooth_start."
+        params:
+          - {name: initial, kind: keyword, type: Numeric}
+          - {name: final, kind: keyword, type: Numeric}
+          - {name: perc, kind: keyword, type: Numeric}
+          - {name: power, kind: keyword, type: Numeric}
+          - {name: flip, kind: keyword, type: Boolean}
+          - {name: start_at, kind: keyword, type: Numeric}
+          - {name: end_at, kind: keyword, type: Numeric}
+          - {name: duration, kind: keyword, type: Numeric}
+          - {name: tick_count, kind: keyword, type: Numeric}
+      - name: mix
+        kind: method
+        returns: Float
+        doc: "Mixes two values by the given percentage."
+        params:
+          - {name: value_1, kind: required, type: Numeric}
+          - {name: value_2, kind: required, type: Numeric}
+          - {name: percentage, kind: required, type: Numeric}
+      - name: ease
+        kind: method
+        returns: Float
+        doc: "Progress between 0 and 1 for the given tick range, driven by one or more easing definitions."
+        params:
+          - {name: start_tick, kind: required, type: Numeric}
+          - {name: current_tick, kind: required, type: Numeric}
+          - {name: duration, kind: required, type: Numeric}
+          - {name: definitions, kind: rest, type: Object}

@@ -1,0 +1,30 @@
+types:
+  - name: Layout
+    doc: "Places UI on a virtual safe-area grid of 12 rows by 24 columns. Available globally through Layout and args.layout."
+    members:
+      - name: rect
+        kind: method
+        returns: Hash
+        doc: "Rect for the given row, col, w, and h cells, including a center point. Pass allscreen to align to the all-screen area."
+        params:
+          - {name: row, kind: keyword, type: Integer}
+          - {name: col, kind: keyword, type: Integer}
+          - {name: w, kind: keyword, type: Integer}
+          - {name: h, kind: keyword, type: Integer}
+          - {name: allscreen, kind: keyword, type: Boolean}
+      - name: allscreen_rect
+        kind: method
+        returns: Hash
+        doc: "Same as rect with allscreen set to true, aligning the rect to the all-screen area."
+        params:
+          - {name: row, kind: keyword, type: Integer}
+          - {name: col, kind: keyword, type: Integer}
+          - {name: w, kind: keyword, type: Integer}
+          - {name: h, kind: keyword, type: Integer}
+      - {name: debug_primitives, kind: attribute, returns: Array, doc: "Grid overlay primitives that can be rendered to visualize layout cells."}
+      - {name: portrait?, kind: attribute, returns: Boolean, doc: "Alias of Grid.portrait?."}
+      - {name: landscape?, kind: attribute, returns: Boolean, doc: "Alias of Grid.landscape?."}
+      - {name: row_count, kind: attribute, returns: Integer, doc: "Number of rows in the layout grid: 12 in landscape and 24 in portrait."}
+      - {name: row_max_index, kind: attribute, returns: Integer, doc: "Maximum row index."}
+      - {name: col_count, kind: attribute, returns: Integer, doc: "Number of columns in the layout grid: 24 in landscape and 12 in portrait."}
+      - {name: col_max_index, kind: attribute, returns: Integer, doc: "Maximum column index."}

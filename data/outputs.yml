@@ -1,0 +1,116 @@
+types:
+  - name: GTK::Outputs
+    doc: "Render collections and render targets. Push primitives into a collection to draw them."
+    members:
+      - {name: solids, kind: attribute, returns: GTK::Outputs::Solids, doc: "Filled rectangle primitives, rendered first.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=solids"}
+      - {name: sprites, kind: attribute, returns: GTK::Outputs::Sprites, doc: "Sprite primitives.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=sprites"}
+      - {name: primitives, kind: attribute, returns: GTK::Outputs::Primitives, doc: "Accepts any primitive in first-in first-out order.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=primitives"}
+      - {name: labels, kind: attribute, returns: GTK::Outputs::Labels, doc: "Text primitives.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=labels"}
+      - {name: lines, kind: attribute, returns: GTK::Outputs::Lines, doc: "Line primitives.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=lines"}
+      - {name: borders, kind: attribute, returns: GTK::Outputs::Borders, doc: "Unfilled rectangle primitives.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=borders"}
+      - {name: debug, kind: attribute, returns: GTK::Outputs::Debug, doc: "Primitives rendered above everything and skipped in production builds.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=debug"}
+      - {name: static_sprites, kind: attribute, returns: GTK::Outputs::StaticSprites, doc: "Sprites that are only rendered when the collection changes."}
+      - {name: static_labels, kind: attribute, returns: GTK::Outputs::StaticLabels, doc: "Labels that are only rendered when the collection changes."}
+      - {name: static_solids, kind: attribute, returns: GTK::Outputs::StaticSolids, doc: "Solids that are only rendered when the collection changes."}
+      - {name: static_borders, kind: attribute, returns: GTK::Outputs::StaticBorders, doc: "Borders that are only rendered when the collection changes."}
+      - {name: static_lines, kind: attribute, returns: GTK::Outputs::StaticLines, doc: "Lines that are only rendered when the collection changes."}
+      - {name: static_primitives, kind: attribute, returns: GTK::Outputs::StaticPrimitives, doc: "Any primitives that are only rendered when the collection changes."}
+      - {name: screenshots, kind: attribute, returns: GTK::Outputs::Screenshots, doc: "Screenshot requests. Push a hash with x, y, w, h, and path.", docs_url: "https://docs.dragonruby.org/#/api/outputs?id=screenshots"}
+      - {name: sounds, kind: attribute, returns: GTK::Outputs::Sounds, doc: "Push a sound file path to play a one-time sound."}
+      - {name: background_color, kind: attribute, returns: Array, doc: "Top-level background color as [r, g, b] or { r:, g:, b: }."}
+      - {name: shader_path, kind: attribute, returns: String, doc: "Path to a GLSL shader to compile and load."}
+      - {name: shader_uniforms, kind: attribute, returns: Array, doc: "Uniform bindings for the active shader as an array of name, value, and type hashes."}
+      - name: "[]"
+        kind: method
+        returns: GTK::Outputs::RenderTarget
+        doc: "Returns the render target for the given symbol, creating it on first access."
+        params: [{name: name, kind: required, type: Symbol}]
+    generates:
+      - names: shader_texture_numbers
+        members:
+          - {name: "shader_tex{{name}}", kind: attribute, returns: Symbol, doc: "Binds render target {{name}} as a shader texture uniform."}
+
+  - name: GTK::Outputs::Collection
+    doc: "Shared behavior for the output collections, which accept primitives with << and concat."
+    members:
+      - name: "<<"
+        kind: method
+        returns: GTK::Outputs::Collection
+        doc: "Appends a primitive, an array of primitives, or a collection of primitives."
+        params: [{name: primitive, kind: required, type: Object}]
+      - name: push
+        kind: method
+        returns: GTK::Outputs::Collection
+        doc: "Appends one or more primitives to the collection."
+        params: [{name: primitives, kind: rest, type: Object}]
+      - name: concat
+        kind: method
+        returns: GTK::Outputs::Collection
+        doc: "Appends every primitive in the given array."
+        params: [{name: primitives, kind: required, type: Array}]
+      - {name: length, kind: attribute, returns: Integer, doc: "Number of primitives currently in the collection."}
+      - name: clear
+        kind: method
+        returns: Unknown
+        doc: "Removes every primitive from the collection."
+      - name: each
+        kind: method
+        returns: Unknown
+        doc: "Iterates over every primitive in the collection."
+        params: [{kind: block, type: Object}]
+      - name: "[]"
+        kind: method
+        returns: Unknown
+        doc: "Returns the primitive at the given index."
+        params: [{name: index, kind: required, type: Integer}]
+
+  - {name: GTK::Outputs::Sprites, parent: GTK::Outputs::Collection, doc: "Collection of sprite primitives."}
+  - {name: GTK::Outputs::Labels, parent: GTK::Outputs::Collection, doc: "Collection of label primitives."}
+  - {name: GTK::Outputs::Solids, parent: GTK::Outputs::Collection, doc: "Collection of solid primitives."}
+  - {name: GTK::Outputs::Borders, parent: GTK::Outputs::Collection, doc: "Collection of border primitives."}
+  - {name: GTK::Outputs::Lines, parent: GTK::Outputs::Collection, doc: "Collection of line primitives."}
+  - {name: GTK::Outputs::Primitives, parent: GTK::Outputs::Collection, doc: "Collection that accepts every kind of primitive."}
+  - {name: GTK::Outputs::StaticSprites, parent: GTK::Outputs::Collection, doc: "Static collection of sprite primitives."}
+  - {name: GTK::Outputs::StaticLabels, parent: GTK::Outputs::Collection, doc: "Static collection of label primitives."}
+  - {name: GTK::Outputs::StaticSolids, parent: GTK::Outputs::Collection, doc: "Static collection of solid primitives."}
+  - {name: GTK::Outputs::StaticBorders, parent: GTK::Outputs::Collection, doc: "Static collection of border primitives."}
+  - {name: GTK::Outputs::StaticLines, parent: GTK::Outputs::Collection, doc: "Static collection of line primitives."}
+  - {name: GTK::Outputs::StaticPrimitives, parent: GTK::Outputs::Collection, doc: "Static collection that accepts every kind of primitive."}
+  - {name: GTK::Outputs::Screenshots, parent: GTK::Outputs::Collection, doc: "Collection of screenshot requests."}
+  - {name: GTK::Outputs::Sounds, parent: GTK::Outputs::Collection, doc: "Collection of one-time sound requests."}
+
+  - name: GTK::Outputs::Debug
+    parent: GTK::Outputs::Collection
+    doc: "Debug primitives and strings rendered above everything, and skipped in production builds."
+    members:
+      - name: watch
+        kind: method
+        returns: Unknown
+        doc: "Renders the given object as a labeled debug value, with optional label and background styles."
+        params:
+          - {name: object, kind: required, type: Object}
+          - {name: label_style, kind: keyword, type: Hash}
+          - {name: background_style, kind: keyword, type: Hash}
+
+  - name: GTK::Outputs::RenderTarget
+    parent: GTK::Outputs::Collection
+    doc: "An off-screen canvas that caches primitives until it is rendered to."
+    members:
+      - {name: w, kind: attribute, returns: Numeric, doc: "Width of the render target."}
+      - {name: h, kind: attribute, returns: Numeric, doc: "Height of the render target."}
+      - {name: background_color, kind: attribute, returns: Array, doc: "Background color of the render target as [r, g, b] or { r:, g:, b: }."}
+      - {name: primitives, kind: attribute, returns: GTK::Outputs::Primitives, doc: "Render target primitives rendered in first-in first-out order."}
+      - {name: sprites, kind: attribute, returns: GTK::Outputs::Sprites, doc: "Sprite collection for the render target."}
+      - {name: labels, kind: attribute, returns: GTK::Outputs::Labels, doc: "Label collection for the render target."}
+      - {name: solids, kind: attribute, returns: GTK::Outputs::Solids, doc: "Solid collection for the render target."}
+      - {name: borders, kind: attribute, returns: GTK::Outputs::Borders, doc: "Border collection for the render target."}
+      - {name: lines, kind: attribute, returns: GTK::Outputs::Lines, doc: "Line collection for the render target."}
+      - {name: sounds, kind: attribute, returns: GTK::Outputs::Sounds, doc: "Sound collection for the render target."}
+      - name: set
+        kind: method
+        returns: Unknown
+        doc: "Sets the render target's width, height, and background color in one call."
+        params:
+          - {name: w, kind: keyword, type: Numeric}
+          - {name: h, kind: keyword, type: Numeric}
+          - {name: background_color, kind: keyword, type: Array}

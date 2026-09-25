@@ -1,0 +1,366 @@
+types:
+  - name: Geometry
+    doc: "Helpers for vectors, angles, rectangles, collision detection, and transforms. Also mixed into Hash, Array, and entity values."
+    members:
+      - name: angle
+        kind: method
+        returns: Float
+        doc: "Angle in degrees from start_point to end_point."
+        params:
+          - {name: start_point, kind: required, type: Object}
+          - {name: end_point, kind: required, type: Object}
+      - name: angle_from
+        kind: method
+        returns: Float
+        doc: "Angle in degrees from end_point back to start_point."
+        params:
+          - {name: start_point, kind: required, type: Object}
+          - {name: end_point, kind: required, type: Object}
+      - name: angle_to
+        kind: method
+        returns: Float
+        doc: "Angle in degrees from start_point to end_point."
+        params:
+          - {name: start_point, kind: required, type: Object}
+          - {name: end_point, kind: required, type: Object}
+      - name: angle_turn_direction
+        kind: method
+        returns: Integer
+        doc: "Returns 1 for clockwise or -1 for counter-clockwise, whichever turns from angle to target_angle faster."
+        params:
+          - {name: angle, kind: required, type: Numeric}
+          - {name: target_angle, kind: required, type: Numeric}
+      - name: angle_delta
+        kind: method
+        returns: Float
+        doc: "Smallest angle delta in degrees between angle and target_angle."
+        params:
+          - {name: angle, kind: required, type: Numeric}
+          - {name: target_angle, kind: required, type: Numeric}
+      - name: angle_within_range?
+        kind: method
+        returns: Boolean
+        doc: "True if test_angle is within range degrees of target_angle."
+        params:
+          - {name: test_angle, kind: required, type: Numeric}
+          - {name: target_angle, kind: required, type: Numeric}
+          - {name: range, kind: required, type: Numeric}
+      - name: rotate_point
+        kind: method
+        returns: Hash
+        doc: "Rotates a point by the given degrees around the origin or an optional point."
+        params:
+          - {name: point, kind: required, type: Object}
+          - {name: angle, kind: required, type: Numeric}
+          - {name: options, kind: rest, type: Hash}
+      - {name: angle_vec2, kind: method, returns: Hash, doc: "Vector components for an angle in degrees.", params: [{name: angle, kind: required, type: Numeric}]}
+      - {name: angle_vec2_r, kind: method, returns: Hash, doc: "Vector components for an angle in radians.", params: [{name: angle, kind: required, type: Numeric}]}
+      - {name: angle_cardinal_vec2, kind: method, returns: Hash, doc: "Vector components snapped to 45 degree directions for an angle in degrees.", params: [{name: angle, kind: required, type: Numeric}]}
+      - {name: angle_cardinal_vec2_r, kind: method, returns: Hash, doc: "Cardinal vector components for an angle in radians.", params: [{name: angle, kind: required, type: Numeric}]}
+      - name: distance
+        kind: method
+        returns: Float
+        doc: "Distance between two points."
+        params:
+          - {name: point_1, kind: required, type: Object}
+          - {name: point_2, kind: required, type: Object}
+      - name: distance_squared
+        kind: method
+        returns: Float
+        doc: "Squared distance between two points, useful when only comparing distances."
+        params:
+          - {name: point_1, kind: required, type: Object}
+          - {name: point_2, kind: required, type: Object}
+      - {name: line_angle, kind: method, returns: Float, doc: "Angle of the line in degrees.", params: [{name: line, kind: required, type: Object}]}
+      - {name: line_rise_run, kind: method, returns: Hash, doc: "Normalized rise and run of the line as x and y.", params: [{name: line, kind: required, type: Object}]}
+      - {name: line_vec2, kind: method, returns: Hash, doc: "Vector of the line as x and y.", params: [{name: line, kind: required, type: Object}]}
+      - name: line_normal
+        kind: method
+        returns: Hash
+        doc: "Normal of the line relative to the given point."
+        params:
+          - {name: line, kind: required, type: Object}
+          - {name: point, kind: required, type: Object}
+      - name: vec2_dot_product
+        kind: method
+        returns: Float
+        doc: "Dot product of two vectors."
+        params:
+          - {name: vector_1, kind: required, type: Object}
+          - {name: vector_2, kind: required, type: Object}
+      - {name: vec2_magnitude, kind: method, returns: Float, doc: "Magnitude of the vector.", params: [{name: vector, kind: required, type: Object}]}
+      - {name: vec2_normalize, kind: method, returns: Hash, doc: "Normalized copy of the vector.", params: [{name: vector, kind: required, type: Object}]}
+      - {name: vec2_normal, kind: method, returns: Hash, doc: "Normal of the vector.", params: [{name: vector, kind: required, type: Object}]}
+      - name: vec2_add
+        kind: method
+        returns: Hash
+        doc: "Sum of two vectors."
+        params:
+          - {name: vector_1, kind: required, type: Object}
+          - {name: vector_2, kind: required, type: Object}
+      - name: vec2_subtract
+        kind: method
+        returns: Hash
+        doc: "Difference of two vectors."
+        aliases: [vec2_sub]
+        params:
+          - {name: vector_1, kind: required, type: Object}
+          - {name: vector_2, kind: required, type: Object}
+      - name: vec2_scale
+        kind: method
+        returns: Hash
+        doc: "Vector with each component multiplied by the scalar."
+        params:
+          - {name: vector, kind: required, type: Object}
+          - {name: scalar, kind: required, type: Numeric}
+      - {name: vec2_angle, kind: method, returns: Float, doc: "Angle of the vector in degrees from 0 to 359.9.", params: [{name: vector, kind: required, type: Object}]}
+      - name: intersect_rect?
+        kind: method
+        returns: Boolean
+        doc: "True if two rectangles intersect, with an optional overlap tolerance defaulting to 0.1."
+        params:
+          - {name: rect_1, kind: required, type: Object}
+          - {name: rect_2, kind: required, type: Object}
+          - {name: tolerance, kind: optional, type: Numeric}
+      - name: inside_rect?
+        kind: method
+        returns: Boolean
+        doc: "True if the first rectangle is entirely inside the second."
+        params:
+          - {name: rect_1, kind: required, type: Object}
+          - {name: rect_2, kind: required, type: Object}
+      - name: intersect_circle?
+        kind: method
+        returns: Boolean
+        doc: "True if two circles, or a circle and a rect, intersect."
+        params:
+          - {name: circle_or_rect_1, kind: required, type: Object}
+          - {name: circle_or_rect_2, kind: required, type: Object}
+      - name: point_inside_circle?
+        kind: method
+        returns: Boolean
+        doc: "True if the point is inside the circle described by center and radius."
+        params:
+          - {name: point, kind: required, type: Object}
+          - {name: circle_center, kind: required, type: Object}
+          - {name: circle_radius, kind: optional, type: Numeric}
+      - name: ray_test
+        kind: method
+        returns: Symbol
+        doc: "Returns :left, :right, or :on for the point relative to the line."
+        params:
+          - {name: point, kind: required, type: Object}
+          - {name: line, kind: required, type: Object}
+      - name: line_intersect
+        kind: method
+        returns: Hash
+        doc: "Intersection point of two line segments, or nil when they do not intersect."
+        params:
+          - {name: line_1, kind: required, type: Object}
+          - {name: line_2, kind: required, type: Object}
+      - name: ray_intersect
+        kind: method
+        returns: Hash
+        doc: "Intersection point of two infinite lines, or nil when parallel."
+        params:
+          - {name: line_1, kind: required, type: Object}
+          - {name: line_2, kind: required, type: Object}
+      - name: find_intersect_rect
+        kind: method
+        returns: Object
+        doc: "First rect in the collection that intersects the given rect, or nil."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: rects, kind: required, type: Array}
+      - name: find_all_intersect_rect
+        kind: method
+        returns: Array
+        doc: "All rects in the collection that intersect the given rect."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: rects, kind: required, type: Array}
+          - {name: tolerance, kind: optional, type: Numeric}
+      - name: circle_intersect_line?
+        kind: method
+        returns: Boolean
+        doc: "True if the circle intersects the line."
+        params:
+          - {name: circle, kind: required, type: Object}
+          - {name: line, kind: required, type: Object}
+      - name: point_on_line?
+        kind: method
+        returns: Boolean
+        doc: "True if the point lies on the line within the optional tolerance."
+        params:
+          - {name: point, kind: required, type: Object}
+          - {name: line, kind: required, type: Object}
+          - {name: tolerance, kind: optional, type: Numeric}
+      - name: each_intersect_rect
+        kind: method
+        returns: Unknown
+        doc: "Calls the block for every pair of intersecting rectangles."
+        params:
+          - {name: rects, kind: required, type: Array}
+          - {name: other_rects, kind: optional, type: Array}
+          - {kind: block, type: Object}
+      - name: find_collisions
+        kind: method
+        returns: Hash
+        doc: "Hash mapping each rect to the first rect it collides with."
+        params:
+          - {name: rects, kind: required, type: Array}
+          - {name: other_rects, kind: optional, type: Array}
+      - name: find_intersect_rect_quad_tree
+        kind: method
+        returns: Object
+        doc: "Collision lookup against a quad tree built with create_quad_tree."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: quad_tree, kind: required, type: Object}
+      - name: find_all_intersect_rect_quad_tree
+        kind: method
+        returns: Array
+        doc: "All collisions against a quad tree built with create_quad_tree."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: quad_tree, kind: required, type: Object}
+      - name: create_quad_tree
+        kind: method
+        returns: Object
+        doc: "Builds a quad tree from an array of rectangles for faster collision lookup."
+        aliases: [quad_tree_create]
+        params: [{name: rects, kind: required, type: Array}]
+      - {name: rect_props, kind: method, returns: Hash, doc: "Expands a rect into x, y, w, h, and center, applying anchors.", params: [{name: rect, kind: required, type: Object}]}
+      - name: rect_center_point
+        kind: method
+        returns: Hash
+        doc: "Center point of the rect as x and y."
+        aliases: [center]
+        params: [{name: rect, kind: required, type: Object}]
+      - {name: line_center_point, kind: method, returns: Hash, doc: "Center point of the line as x and y.", params: [{name: line, kind: required, type: Object}]}
+      - name: rect_navigate
+        kind: method
+        returns: Object
+        doc: "Returns the next rect to navigate to given a direction, useful for menus."
+        params:
+          - {name: options, kind: rest, type: Hash}
+      - {name: rect_to_circle, kind: method, returns: Hash, doc: "Smallest circle that contains the given rect or circle.", params: [{name: rect, kind: required, type: Object}]}
+      - name: scale_rect
+        kind: method
+        returns: Hash
+        doc: "New rect scaled by the given ratio from the given anchor."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: ratio, kind: required, type: Numeric}
+          - {name: anchor_x, kind: optional, type: Numeric}
+          - {name: anchor_y, kind: optional, type: Numeric}
+      - name: scale_rect_extended
+        kind: method
+        returns: Hash
+        doc: "New rect scaled independently on each axis."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: percentage_x, kind: keyword, type: Numeric}
+          - {name: percentage_y, kind: keyword, type: Numeric}
+          - {name: anchor_x, kind: keyword, type: Numeric}
+          - {name: anchor_y, kind: keyword, type: Numeric}
+      - name: anchor_rect
+        kind: method
+        returns: Hash
+        doc: "New rect anchored by the given anchor_x and anchor_y values."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: anchor_x, kind: required, type: Numeric}
+          - {name: anchor_y, kind: required, type: Numeric}
+      - name: center_inside_rect
+        kind: method
+        returns: Hash
+        doc: "New rect centered inside the reference rect."
+        params:
+          - {name: target_rect, kind: required, type: Object}
+          - {name: reference_rect, kind: required, type: Object}
+      - name: points_to_line
+        kind: method
+        returns: Hash
+        doc: "Line from the first point to the second as x, y, x2, and y2."
+        params:
+          - {name: point_1, kind: required, type: Object}
+          - {name: point_2, kind: required, type: Object}
+      - {name: line_midpoint, kind: method, returns: Hash, doc: "Midpoint of the line as x and y.", params: [{name: line, kind: required, type: Object}]}
+      - {name: rect_to_lines, kind: method, returns: Array, doc: "The four edges of the rect as lines ordered bottom, right, top, left.", params: [{name: rect, kind: required, type: Object}]}
+      - name: zoom_rect
+        kind: method
+        returns: Hash
+        doc: "New rect with adjusted dimensions that stays centered on the original."
+        params:
+          - {name: rect, kind: required, type: Object}
+          - {name: ratio, kind: keyword, type: Numeric}
+          - {name: w_ratio, kind: keyword, type: Numeric}
+          - {name: h_ratio, kind: keyword, type: Numeric}
+          - {name: px, kind: keyword, type: Numeric}
+          - {name: w_px, kind: keyword, type: Numeric}
+          - {name: h_px, kind: keyword, type: Numeric}
+      - name: lerp_rect
+        kind: method
+        returns: Hash
+        doc: "Linear interpolation between two rects by the given step."
+        params:
+          - {name: from, kind: required, type: Object}
+          - {name: to, kind: required, type: Object}
+          - {name: step, kind: required, type: Numeric}
+          - {name: tolerance, kind: keyword, type: Numeric}
+      - name: perlin_noise
+        kind: method
+        returns: Float
+        doc: "Basic 3D Perlin noise at normalized coordinates, with optional wrapping for tiling."
+        params:
+          - {name: x, kind: required, type: Numeric}
+          - {name: y, kind: required, type: Numeric}
+          - {name: z, kind: required, type: Numeric}
+          - {name: x_wrap, kind: optional, type: Integer}
+          - {name: y_wrap, kind: optional, type: Integer}
+          - {name: z_wrap, kind: optional, type: Integer}
+      - {name: perlin_noise_seed, kind: method, returns: Unknown, doc: "Sets the seed used by the Perlin noise functions.", params: [{name: seed, kind: required, type: Integer}]}
+      - name: perlin_ridge_noise
+        kind: method
+        returns: Float
+        doc: "Ridged Perlin noise for procedural terrain at normalized coordinates."
+        params:
+          - {name: x, kind: required, type: Numeric}
+          - {name: y, kind: required, type: Numeric}
+          - {name: z, kind: required, type: Numeric}
+          - {name: x_wrap, kind: optional, type: Integer}
+          - {name: y_wrap, kind: optional, type: Integer}
+          - {name: z_wrap, kind: optional, type: Integer}
+      - name: perlin_fbm_noise
+        kind: method
+        returns: Float
+        doc: "Fractal Brownian motion Perlin noise at normalized coordinates."
+        params:
+          - {name: x, kind: required, type: Numeric}
+          - {name: y, kind: required, type: Numeric}
+          - {name: z, kind: required, type: Numeric}
+          - {name: x_wrap, kind: optional, type: Integer}
+          - {name: y_wrap, kind: optional, type: Integer}
+          - {name: z_wrap, kind: optional, type: Integer}
+      - name: perlin_turbulence_noise
+        kind: method
+        returns: Float
+        doc: "Turbulence Perlin noise at normalized coordinates."
+        params:
+          - {name: x, kind: required, type: Numeric}
+          - {name: y, kind: required, type: Numeric}
+          - {name: z, kind: required, type: Numeric}
+          - {name: x_wrap, kind: optional, type: Integer}
+          - {name: y_wrap, kind: optional, type: Integer}
+          - {name: z_wrap, kind: optional, type: Integer}
+      - name: cubic_bezier_vec2
+        kind: method
+        returns: Hash
+        doc: "Point along a cubic bezier curve defined by four control points."
+        params:
+          - {name: point_1, kind: required, type: Object}
+          - {name: point_2, kind: required, type: Object}
+          - {name: point_3, kind: required, type: Object}
+          - {name: point_4, kind: required, type: Object}
+          - {name: step, kind: required, type: Numeric}
