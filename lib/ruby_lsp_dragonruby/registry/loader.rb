@@ -139,6 +139,7 @@ module RubyLsp
             open: spec["open"] || false,
             incomplete: spec["incomplete"] || false,
             core_extension: spec["core_extension"] || false,
+            core_backing: spec["core_backing"],
             doc: spec["doc"],
             ancestors: ancestors
           )

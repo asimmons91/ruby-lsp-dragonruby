@@ -2,10 +2,13 @@
 
 require "ruby_lsp/internal"
 
+require_relative "../chain"
 require_relative "../macro_lookup"
 require_relative "../primitive_context"
 require_relative "../resolver"
+require_relative "../settings"
 require_relative "../signature"
+require_relative "../warnings/undefined_member"
 
 module RubyLsp
   module Dragonruby
@@ -15,14 +18,17 @@ module RubyLsp
       class Hover
         include Requests::Support::Common
 
-        def initialize(response_builder, registry, node_context, dispatcher, logger: nil, index: nil, state: nil)
+        def initialize(response_builder, registry, node_context, dispatcher, logger: nil, index: nil, state: nil,
+          settings: nil)
           @response_builder = response_builder
           @registry = registry
           @node_context = node_context
           @logger = logger
           @index = index
           @state = state
+          @settings = settings || Settings.new
           @resolver = state&.resolver || Resolver.new(registry, index: index)
+          @undefined = Warnings::UndefinedMember.new(registry, index: index, settings: @settings)
 
           state&.ensure_workspace_scanned
           dispatcher.register(
@@ -96,8 +102,22 @@ module RubyLsp
           end
 
           return true if handle_state_member(node)
+          return true if handle_core_extension_member(resolution, node)
 
-          handle_core_extension_member(resolution, node)
+          handle_undefined_member(resolution, node)
+        end
+
+        # REQ-M7-07: the hover fallback is shown whenever warnings are enabled,
+        # independent of whether the linter is configured.
+        def handle_undefined_member(resolution, node)
+          return false unless resolution.resolved_type?
+          return false if node.attribute_write? || Chain.trailing_dot?(node)
+
+          message = @undefined.warning_for(resolution.type, node.name.to_s)
+          return false unless message
+
+          @response_builder.push(message, category: :documentation)
+          true
         end
 
         # A call on a core-typed receiver (literal, registry chain, or a state

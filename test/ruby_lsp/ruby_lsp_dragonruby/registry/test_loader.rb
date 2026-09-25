@@ -52,6 +52,22 @@ module RubyLsp
         assert_nil @registry.type("GTK::Base").member("inputs")
       end
 
+      def test_core_backing_is_inherited
+        types = <<~YAML
+          types:
+            - name: GTK::Collection
+              core_backing: Array
+              members: []
+            - name: GTK::Sprites
+              parent: GTK::Collection
+              members: []
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => types})
+
+        assert_equal "Array", registry.type("GTK::Collection").core_backing
+        assert_equal "Array", registry.type("GTK::Sprites").core_backing
+      end
+
       def test_generated_members
         keyboard = @registry.type("GTK::Keyboard")
         assert_equal ["a", "b", "key_down"], keyboard.members.map(&:name).sort

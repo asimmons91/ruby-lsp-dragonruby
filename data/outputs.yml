@@ -32,6 +32,7 @@ types:
 
   - name: GTK::Outputs::Collection
     doc: "Shared behavior for the output collections, which accept primitives with << and concat."
+    core_backing: Array
     members:
       - name: "<<"
         kind: method

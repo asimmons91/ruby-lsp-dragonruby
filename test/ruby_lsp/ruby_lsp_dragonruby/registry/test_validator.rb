@@ -219,6 +219,45 @@ module RubyLsp
         assert_includes error_messages(issues_for(type_yaml, schemas: SCHEMAS)), "dangling accepts_primitive reference `nope`"
       end
 
+      def test_core_backing_resolves
+        type_yaml = <<~YAML
+          types:
+            - name: GTK::Sprites
+              core_backing: Array
+              members:
+                - {name: push, kind: method, returns: GTK::Sprites, doc: Push}
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml})
+        assert_equal "Array", registry.type("GTK::Sprites").core_backing
+      end
+
+      def test_core_backing_must_be_a_core_type
+        type_yaml = <<~YAML
+          types:
+            - name: GTK::Sprites
+              core_backing: Nope
+              members:
+                - {name: push, kind: method, returns: GTK::Sprites, doc: Push}
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml})
+        assert_nil registry.type("GTK::Sprites").core_backing
+        assert_includes error_messages(issues_for(type_yaml)), "`core_backing` must be a core type name"
+      end
+
+      def test_core_backing_requires_a_ruby_class
+        type_yaml = <<~YAML
+          types:
+            - name: GTK::Sprites
+              core_backing: Boolean
+              members:
+                - {name: push, kind: method, returns: GTK::Sprites, doc: Push}
+        YAML
+        registry = load_registry({"metadata.yml" => METADATA, "types.yml" => type_yaml})
+        assert_nil registry.type("GTK::Sprites").core_backing
+        assert_includes error_messages(issues_for(type_yaml)),
+          "`core_backing` type `Boolean` has no Ruby class to reflect"
+      end
+
       def test_macros_are_validated_and_built
         macros = <<~YAML
           macros:

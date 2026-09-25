@@ -4,10 +4,16 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "ruby-lsp-dragonruby"
 require "ruby_lsp/internal"
 require "ruby_lsp/test_helper"
+require "ruby_lsp_dragonruby/edit_distance"
 require "ruby_lsp_dragonruby/indexing_enhancement"
 require "ruby_lsp_dragonruby/listeners/completion"
 require "ruby_lsp_dragonruby/listeners/definition"
 require "ruby_lsp_dragonruby/listeners/hover"
+require "ruby_lsp_dragonruby/settings"
+require "ruby_lsp_dragonruby/standard_methods"
+require "ruby_lsp_dragonruby/warnings/analyzer"
+require "ruby_lsp_dragonruby/warnings/formatter"
+require "ruby_lsp_dragonruby/warnings/undefined_member"
 require "ruby_lsp_dragonruby/state_collector"
 require "ruby_lsp_dragonruby/state_store"
 require "ruby_lsp_dragonruby/state_tracker"
@@ -334,6 +340,26 @@ module ServerTestHelper
     end
   end
 
+  # Diagnostics are only computed for URIs inside the workspace
+  # (ruby-lsp's `text_document_diagnostic` path check), so diagnostics tests
+  # need a workspace URI instead of the default `file:///fake.rb`.
+  def with_workspace_server(source, **options)
+    with_server(source, workspace_uri, **options) do |server, uri|
+      yield server, uri
+    end
+  end
+
+  def with_workspace_cursor(source, **options)
+    clean, line, character = cursor_position(source)
+    with_workspace_server(clean, **options) do |server, uri|
+      yield server, uri, line, character
+    end
+  end
+
+  def workspace_uri
+    URI::Generic.from_path(path: File.join(Dir.pwd, "test_dragonruby_workspace.rb"))
+  end
+
   def cursor_position(source)
     index = source.index(CURSOR)
     raise ArgumentError, "source is missing the #{CURSOR.inspect} cursor marker" unless index
@@ -379,6 +405,35 @@ module ServerTestHelper
       params: {textDocument: {uri: uri}, position: {line: line, character: character}}
     )
     Array(pop_result(server).response)
+  end
+
+  def diagnostic_items(server, uri)
+    server.process_message(
+      id: 1,
+      method: "textDocument/diagnostic",
+      params: {textDocument: {uri: uri}}
+    )
+    report = pop_result(server).response
+    report ? report.items : []
+  end
+
+  def dragonruby_items(server, uri)
+    diagnostic_items(server, uri).select { |item| item.source == "dragonruby" }
+  end
+
+  # Applies add-on settings and/or the linter list after the server booted.
+  # Settings are read lazily per request, so this takes effect immediately.
+  def configure_addon(server, settings: nil, linters: nil)
+    options = {}
+    options[:linters] = linters if linters
+    options[:addonSettings] = {RubyLsp::Dragonruby::Settings::ADDON_NAME => settings} if settings
+    server.global_state.apply_options({initializationOptions: options})
+  end
+
+  # Test servers never run initial indexing, so the workspace scan cannot run;
+  # this marks it complete for tests that exercise cross-file state knowledge.
+  def mark_state_scanned(server)
+    state_tracker(server).instance_variable_set(:@scanned, true)
   end
 
   def dragonruby_addon(_server = nil)

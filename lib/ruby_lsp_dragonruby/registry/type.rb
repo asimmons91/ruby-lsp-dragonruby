@@ -4,10 +4,10 @@ module RubyLsp
   module Dragonruby
     class Registry
       class Type
-        attr_reader :name, :parent_name, :members, :all_members, :accepts_primitive, :ancestors, :doc
+        attr_reader :name, :parent_name, :members, :all_members, :accepts_primitive, :ancestors, :doc, :core_backing
 
         def initialize(name:, parent_name: nil, members: [], accepts_primitive: nil, open: false,
-          incomplete: false, core_extension: false, doc: nil, ancestors: [])
+          incomplete: false, core_extension: false, core_backing: nil, doc: nil, ancestors: [])
           @name = name
           @parent_name = parent_name
           @members = members.freeze
@@ -16,6 +16,7 @@ module RubyLsp
           @open = open
           @incomplete = incomplete
           @core_extension = core_extension
+          @core_backing = core_backing || ancestors.filter_map(&:core_backing).first
           @doc = doc
           @members_by_name = index_members(@members)
           @all_members = (members + ancestors.flat_map(&:members)).uniq(&:name).freeze

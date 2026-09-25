@@ -12,6 +12,9 @@ require_relative "../../ruby_lsp_dragonruby/roots"
 require_relative "../../ruby_lsp_dragonruby/resolver"
 require_relative "../../ruby_lsp_dragonruby/signature"
 require_relative "../../ruby_lsp_dragonruby/state_tracker"
+require_relative "../../ruby_lsp_dragonruby/settings"
+require_relative "../../ruby_lsp_dragonruby/warnings/undefined_member"
+require_relative "../../ruby_lsp_dragonruby/warnings/formatter"
 require_relative "../../ruby_lsp_dragonruby/listeners/completion"
 require_relative "../../ruby_lsp_dragonruby/listeners/definition"
 require_relative "../../ruby_lsp_dragonruby/listeners/hover"
@@ -25,12 +28,13 @@ module RubyLsp
         super()
         @logger = logger || Logger.new
         @registry = nil
+        @global_state = nil
         @index = nil
         @state_tracker = nil
       end
 
       def name
-        "Ruby LSP DragonRuby"
+        Settings::ADDON_NAME
       end
 
       def version
@@ -39,6 +43,7 @@ module RubyLsp
 
       def activate(global_state, _outgoing_queue)
         @registry = Registry.load(logger: @logger)
+        @global_state = global_state
         @index = global_state&.index
         IndexingEnhancement.registry = @registry
         @state_tracker = StateTracker.new(
@@ -47,6 +52,7 @@ module RubyLsp
           workspace_path: global_state&.workspace_path,
           logger: @logger
         )
+        register_diagnostics(global_state)
       rescue => error
         @logger.error("#{error.class}: #{error.message}")
         add_error(error)
@@ -55,6 +61,7 @@ module RubyLsp
       def deactivate
         IndexingEnhancement.registry = nil
         @registry = nil
+        @global_state = nil
         @index = nil
         @state_tracker = nil
         Registry.reset!
@@ -89,7 +96,8 @@ module RubyLsp
           dispatcher,
           logger: @logger,
           index: @index,
-          state: @state_tracker
+          state: @state_tracker,
+          settings: Settings.from(@global_state)
         )
       rescue => error
         @logger.error("#{error.class}: #{error.message}")
@@ -131,6 +139,23 @@ module RubyLsp
       end
 
       private
+
+      # Pull diagnostics (M0-S3): Ruby LSP calls `run_diagnostic` when the
+      # user lists `Settings::LINTER_ID` in the editor's `linters` option.
+      def register_diagnostics(global_state)
+        return unless global_state
+
+        global_state.register_formatter(
+          Settings::LINTER_ID,
+          Warnings::Formatter.new(
+            @registry,
+            index: @index,
+            state: @state_tracker,
+            global_state: global_state,
+            logger: @logger
+          )
+        )
+      end
 
       def apply_state_change(uri, path, type)
         case type

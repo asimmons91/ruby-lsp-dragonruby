@@ -234,6 +234,7 @@ module RubyLsp
           if spec["core_extension"] && !CORE_TYPES.include?(name)
             issue(path, "core_extension type `#{name}` must be a core type", :warning)
           end
+          spec["core_backing"] = validate_core_backing(raw["core_backing"], path)
 
           accepts = raw["accepts_primitive"]
           if accepts
@@ -284,6 +285,25 @@ module RubyLsp
           unless [true, false].include?(value)
             issue(path, "`#{key}` must be true or false")
             return default
+          end
+
+          value
+        end
+
+        # `core_backing` names the core Ruby class a type behaves like, so
+        # warnings can suppress that class's standard methods. It must be a
+        # curated core type with a CRuby class to reflect.
+        def validate_core_backing(value, path)
+          return nil if value.nil?
+
+          unless value.is_a?(String) && CORE_TYPES.include?(value)
+            issue(path, "`core_backing` must be a core type name")
+            return nil
+          end
+
+          unless Object.const_defined?(value)
+            issue(path, "`core_backing` type `#{value}` has no Ruby class to reflect")
+            return nil
           end
 
           value

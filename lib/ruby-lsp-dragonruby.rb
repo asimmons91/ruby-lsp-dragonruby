@@ -14,6 +14,11 @@ require_relative "ruby_lsp_dragonruby/signature"
 require_relative "ruby_lsp_dragonruby/state_collector"
 require_relative "ruby_lsp_dragonruby/state_store"
 require_relative "ruby_lsp_dragonruby/state_tracker"
+require_relative "ruby_lsp_dragonruby/edit_distance"
+require_relative "ruby_lsp_dragonruby/settings"
+require_relative "ruby_lsp_dragonruby/warnings/undefined_member"
+require_relative "ruby_lsp_dragonruby/warnings/analyzer"
+require_relative "ruby_lsp_dragonruby/warnings/formatter"
 
 module RubyLsp
   module Dragonruby

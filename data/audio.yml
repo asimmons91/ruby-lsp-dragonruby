@@ -1,6 +1,7 @@
 types:
   - name: GTK::Audio
     doc: "Hash-like collection of playing sounds and music. Assign a hash to a key to play it, and set it to nil to stop."
+    core_backing: Hash
     members:
       - {name: volume, kind: attribute, returns: Numeric, doc: "Global volume applied to every audio source, from 0.0 to 1.0.", docs_url: "https://docs.dragonruby.org/#/api/audio?id=volume"}
       - name: "[]"

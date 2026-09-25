@@ -41,6 +41,12 @@ module RubyLsp
         log(error)
       end
 
+      # Whether the one-time workspace scan has run. Diagnostics that depend on
+      # workspace-wide knowledge skip themselves until it has.
+      def scanned?
+        @scanned
+      end
+
       # The structural state path a node reads, if any. Used by hover when a
       # curated entity member shadows a middle segment.
       def state_path_for(node, node_context)
@@ -53,6 +59,16 @@ module RubyLsp
         return unless uri && source
 
         program = Prism.parse(source).value
+        replace_program(uri, program)
+      rescue => error
+        log(error)
+      end
+
+      # Replaces a file's contributions from an already parsed program
+      # (diagnostics requests).
+      def replace_program(uri, program)
+        return unless uri && program
+
         @store.replace(uri.to_s, @collector.collect(program, uri))
       rescue => error
         log(error)
