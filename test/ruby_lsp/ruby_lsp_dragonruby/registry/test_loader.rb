@@ -100,6 +100,19 @@ module RubyLsp
         assert logger.messages.any? { |message| message.include?("could not parse YAML") }
       end
 
+      def test_duplicate_metadata_document_is_reported
+        logger = quiet_logger
+        files = {
+          "metadata.yml" => METADATA,
+          "metadata2.yml" => METADATA,
+          "types.yml" => TYPES
+        }
+        registry = load_registry(files, logger: logger)
+
+        assert_equal 7, registry.types.size
+        assert logger.messages.any? { |message| message.include?("duplicate registry metadata document") }
+      end
+
       def test_validator_skips_bad_members_but_keeps_type
         type_yaml = <<~YAML
           types:

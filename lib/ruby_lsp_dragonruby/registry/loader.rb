@@ -13,7 +13,7 @@ module RubyLsp
         def initialize(data_dir:, logger: nil)
           @data_dir = data_dir
           @logger = logger
-          @parse_issues = []
+          @loader_issues = []
         end
 
         def load
@@ -23,7 +23,9 @@ module RubyLsp
         end
 
         def validation_issues
-          validation_result.issues
+          result = validation_result
+          report(result.issues)
+          result.issues
         end
 
         private
@@ -31,11 +33,11 @@ module RubyLsp
         def validation_result
           @validation_result ||= begin
             result = Validator.new(read_documents).call
-            if @parse_issues.empty?
+            if @loader_issues.empty?
               result
             else
               Validator::Result.new(
-                issues: @parse_issues + result.issues,
+                issues: @loader_issues + result.issues,
                 types: result.types,
                 schemas: result.schemas,
                 metadata: result.metadata,
@@ -55,7 +57,16 @@ module RubyLsp
             data = load_file(file)
             next unless data.is_a?(Hash)
 
-            metadata_entry ||= Entry.new(file: file, raw: data) if data.key?("dragonruby_version")
+            if data.key?("dragonruby_version")
+              if metadata_entry
+                @loader_issues << Issue.new(
+                  path: File.basename(file),
+                  message: "duplicate registry metadata document"
+                )
+              else
+                metadata_entry = Entry.new(file: file, raw: data)
+              end
+            end
             Array(data["types"]).each { |raw| type_entries << Entry.new(file: file, raw: raw) }
             Array(data["schemas"]).each { |raw| schema_entries << Entry.new(file: file, raw: raw) }
 
@@ -80,7 +91,7 @@ module RubyLsp
         def load_file(file)
           YAML.safe_load_file(file, permitted_classes: [Date, Symbol], aliases: true)
         rescue Psych::Exception => error
-          @parse_issues << Issue.new(
+          @loader_issues << Issue.new(
             path: File.basename(file),
             message: "could not parse YAML: #{error.message}"
           )

@@ -22,7 +22,7 @@ module RubyLsp
               type = registry.type(name)
               type.nil? || type.all_members.empty?
             end
-            member_count = types.sum { |name| registry.type(name)&.members&.size || 0 }
+            member_count = types.sum { |name| registry.type(name)&.all_members&.size || 0 }
 
             Area.new(
               id: raw["id"],
