@@ -176,6 +176,40 @@ module RubyLsp
         assert_empty content.to_s
       end
 
+      def test_core_extension_member_hover
+        content = core_hover("def tick(args)\n  5.sec‸onds\nend\n")
+
+        assert_includes content, "seconds() → Integer"
+        assert_includes content, "Seconds"
+        assert_includes content, "DragonRuby extension of `Integer`."
+      end
+
+      def test_core_extension_hover_through_registry_returns
+        content = core_hover("def tick(args)\n  args.score.sec‸onds\nend\n")
+
+        assert_includes content, "DragonRuby extension of `Integer`."
+      end
+
+      def test_class_scope_core_extension_hover
+        content = core_hover("Numeric.frame_‸index\n")
+
+        assert_includes content, "frame_index() → Integer"
+        assert_includes content, "DragonRuby extension of `Numeric`."
+      end
+
+      def test_unknown_core_extension_member_produces_nothing
+        content = core_hover("def tick(args)\n  5.no‸pe\nend\n")
+
+        assert_empty content.to_s
+      end
+
+      def test_bare_kernel_member_hover
+        content = core_hover("def tick(args)\n  tick_co‸unt\nend\n")
+
+        assert_includes content, "tick_count → Integer"
+        assert_includes content, "DragonRuby extension of `Kernel`."
+      end
+
       private
 
       def dispatch_hover(source)
@@ -200,6 +234,20 @@ module RubyLsp
         dispatcher = Prism::Dispatcher.new
         context = locate_context(source, adjust: 0, node_types: [Prism::LocalVariableReadNode])
         Listeners::Hover.new(builder, @registry, context, dispatcher, logger: @logger)
+        dispatcher.dispatch_once(context.node) if context.node
+
+        builder.response
+      end
+
+      def core_hover(source)
+        builder = ResponseBuilders::Hover.new
+        dispatcher = Prism::Dispatcher.new
+        context = locate_context(
+          source,
+          adjust: 0,
+          node_types: RubyLsp::Listeners::Hover::ALLOWED_TARGETS
+        )
+        Listeners::Hover.new(builder, load_core_registry, context, dispatcher, logger: @logger)
         dispatcher.dispatch_once(context.node) if context.node
 
         builder.response

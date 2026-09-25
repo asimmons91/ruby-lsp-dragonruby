@@ -79,3 +79,7 @@ areas:
     title: "Class macros"
     docs: "https://docs.dragonruby.org/#/api/runtime"
     macros: [attr_gtk, attr_sprite]
+  - id: core-extensions
+    title: "Core class extensions"
+    docs: "https://docs.dragonruby.org/#/api/numeric"
+    types: [Numeric, Integer, Float, Array, Hash, Kernel]

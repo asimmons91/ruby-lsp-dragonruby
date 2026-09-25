@@ -65,6 +65,27 @@ module RubyLsp
                 returns: Boolean
                 doc: Inside
                 params: [{name: rect, kind: required, type: Object}]
+          - name: Numeric
+            core_extension: true
+            members:
+              - {name: seconds, kind: method, returns: Integer, doc: Seconds}
+              - {name: frame_index, kind: method, returns: Integer, scope: both, doc: Frame}
+          - name: Integer
+            core_extension: true
+            parent: Numeric
+            members: []
+          - name: Hash
+            core_extension: true
+            members:
+              - name: intersect_rect?
+                kind: method
+                returns: Boolean
+                doc: Intersect
+                params: [{name: other, kind: required, type: Object}]
+          - name: Kernel
+            core_extension: true
+            members:
+              - {name: tick_count, kind: attribute, returns: Integer, scope: both, doc: Tick}
       YAML
 
       class SelfRoot < Roots::Strategy
@@ -471,6 +492,59 @@ module RubyLsp
         resolution = resolve_at_cursor("def tick(args)\n  args.state.new_ent‸ity\nend")
 
         assert_equal "GTK::Entity", resolution.type.name
+      end
+
+      def test_literal_receivers_resolve_to_their_core_types
+        assert_equal "Integer", @resolver.resolve(expression("5")).core_type
+        assert_equal "Float", @resolver.resolve(expression("1.5")).core_type
+        assert_equal "Hash", @resolver.resolve(expression("{}")).core_type
+        assert_equal "Array", @resolver.resolve(expression("[]")).core_type
+        assert_equal "String", @resolver.resolve(expression("\"\"")).core_type
+        assert_equal "String", @resolver.resolve(expression("\"a\#{1}\"")).core_type
+        assert_equal "Symbol", @resolver.resolve(expression(":sym")).core_type
+      end
+
+      def test_core_extension_members_resolve_through_literal_receivers
+        resolution = resolve_at_cursor("def tick(args)\n  5.sec‸onds\nend")
+
+        assert_equal "Integer", resolution.core_type
+      end
+
+      def test_core_extension_members_resolve_through_registry_returns
+        resolution = resolve_at_cursor("def tick(args)\n  args.outputs.sprites.length.sec‸onds\nend")
+
+        assert_equal "Integer", resolution.core_type
+      end
+
+      def test_core_extension_members_resolve_for_state_paths_with_inferred_types
+        store = StateStore.new
+        store.replace("file:///test.rb", [
+          StateStore::Record.new(
+            path: "player",
+            parent: "",
+            site: StateStore::WriteSite.new(
+              uri: "file:///test.rb", line: 0, character: 0, end_line: 0, end_character: 1,
+              kind: :initialization, type_name: "Hash"
+            )
+          )
+        ])
+        resolver = Resolver.new(@registry, state_store: store)
+
+        result = resolve_with(resolver, "def tick(args)\n  args.state.player.intersect_re‸ct?(:r)\nend")
+
+        assert_equal "Boolean", result.core_type
+      end
+
+      def test_kernel_members_resolve_as_receiverless_calls
+        resolution = resolve_at_cursor("def tick(args)\n  tick_co‸unt\nend")
+
+        assert_equal "Integer", resolution.core_type
+      end
+
+      def test_core_extension_constants_resolve_their_members
+        resolution = resolve_at_cursor("def tick(args)\n  Numeric.frame_‸index\nend")
+
+        assert_equal "Integer", resolution.core_type
       end
 
       private

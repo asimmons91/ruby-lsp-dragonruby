@@ -107,6 +107,61 @@ module RubyLsp
         assert_equal registry.schema("sprite").keys.map(&:name), sprite.accessors.map(&:name)
       end
 
+      def test_core_extension_types_are_curated
+        %w[Numeric Integer Float Array Hash Kernel].each do |name|
+          type = registry.type(name)
+          refute_nil type, "missing core extension type #{name}"
+          assert_predicate type, :core_extension?
+          assert_predicate type, :open?
+          refute_empty type.all_members, "#{name} has no members"
+        end
+      end
+
+      def test_numeric_extensions_are_curated
+        %w[frame frame_index elapsed_time elapsed? to_sf to_si lerp remap clamp_wrap mid min max seconds
+          to_degrees to_radians].each do |name|
+          assert registry.type("Numeric").member?(name), "Numeric is missing #{name}"
+        end
+
+        numeric = registry.type("Numeric")
+        assert numeric.member("frame_index").offered_for?(:class)
+        assert numeric.member("seconds").offered_for?(:instance)
+        refute numeric.member("seconds").offered_for?(:class)
+      end
+
+      def test_hash_and_array_geometry_mixins_are_curated
+        expected = %w[intersect_rect? inside_rect? scale_rect angle_to angle_from point_inside_circle?
+          center_inside_rect anchor_rect rect_center_point]
+
+        expected.each do |name|
+          assert registry.type("Hash").member?(name), "Hash is missing #{name}"
+          assert registry.type("Array").member?(name), "Array is missing #{name}"
+        end
+      end
+
+      def test_array_instance_extensions_are_curated
+        %w[map_2d include_any? any_intersect_rect? reject_nil reject_false].each do |name|
+          assert registry.type("Array").member?(name), "Array is missing #{name}"
+        end
+
+        assert registry.type("Array").member("map").offered_for?(:class)
+        refute registry.type("Array").member("map_2d").offered_for?(:class)
+      end
+
+      def test_kernel_extensions_are_curated
+        %w[tick_count global_tick_count].each do |name|
+          assert registry.type("Kernel").member?(name), "Kernel is missing #{name}"
+        end
+      end
+
+      def test_core_extension_coverage_area_is_covered
+        coverage = Registry::Coverage.call(registry, data_dir: DATA_DIR)
+        area = coverage.areas.find { |candidate| candidate.id == "core-extensions" }
+
+        refute_nil area
+        assert_predicate area, :covered?
+      end
+
       def test_registry_loads_under_100ms
         start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         Registry::Loader.new(data_dir: DATA_DIR, logger: quiet_logger).load

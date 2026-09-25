@@ -39,8 +39,9 @@ module RubyLsp
 
         def on_call_node_enter(node)
           return if handle_member(node)
+          return if handle_macro_accessor(node)
 
-          handle_macro_accessor(node)
+          handle_kernel_member(node)
         rescue => error
           log(error)
         end
@@ -90,11 +91,39 @@ module RubyLsp
 
           member = resolution.type&.member(node.name.to_s)
           if member
-            push_member(member)
+            push_member(member, extension_of: resolution.type.core_extension? ? resolution.type.name : nil)
             return true
           end
 
-          handle_state_member(node)
+          return true if handle_state_member(node)
+
+          handle_core_extension_member(resolution, node)
+        end
+
+        # A call on a core-typed receiver (literal, registry chain, or a state
+        # value with an inferred core type) shows the curated extension docs
+        # (REQ-M6-03, REQ-M6-05).
+        def handle_core_extension_member(resolution, node)
+          if resolution.core?
+            extension = @registry.core_extension_type(resolution.core_type)
+            member = extension&.member(node.name.to_s)
+            if member
+              push_member(member, extension_of: resolution.core_type)
+              return true
+            end
+          elsif resolution.state_path? && @state
+            entry = @state.entry_with_context(resolution.state_path, @node_context)
+            entry&.types&.each do |type_name|
+              extension = @registry.core_extension_type(type_name)
+              member = extension&.member(node.name.to_s)
+              next unless member
+
+              push_member(member, extension_of: type_name)
+              return true
+            end
+          end
+
+          false
         end
 
         # Shows the inferred types and write sites of a known state path
@@ -139,6 +168,20 @@ module RubyLsp
           name.empty? ? nil : name
         end
 
+        # Kernel helpers are callable without a receiver, so a bare or
+        # `self.` call shows the curated Kernel docs.
+        def handle_kernel_member(node)
+          return false unless node.is_a?(Prism::CallNode)
+          return false if node.receiver && !node.receiver.is_a?(Prism::SelfNode)
+
+          extension = @registry.core_extension_type("Kernel")
+          member = extension&.member(node.name.to_s)
+          return false unless member
+
+          push_member(member, extension_of: "Kernel")
+          true
+        end
+
         def handle_primitive_key(node)
           call = @node_context&.call_node
           return unless call.is_a?(Prism::CallNode)
@@ -168,10 +211,11 @@ module RubyLsp
           push_type(resolution.type, label)
         end
 
-        def push_member(member)
+        def push_member(member, extension_of: nil)
           @response_builder.push(signature_block(Signature.of(member), member.returns.to_s), category: :title)
 
           content = +member.doc.to_s
+          content << "\n\nDragonRuby extension of `#{extension_of}`." if extension_of
           content << "\n\n[DragonRuby docs](#{member.docs_url})" if member.docs_url
           @response_builder.push(content, category: :documentation) unless content.empty?
         end

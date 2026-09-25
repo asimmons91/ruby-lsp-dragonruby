@@ -28,6 +28,18 @@ module RubyLsp
           resolve_local(node, context)
         when Prism::CallNode
           resolve_call(node, context)
+        when Prism::IntegerNode
+          Resolution.of_core("Integer")
+        when Prism::FloatNode
+          Resolution.of_core("Float")
+        when Prism::HashNode
+          Resolution.of_core("Hash")
+        when Prism::ArrayNode
+          Resolution.of_core("Array")
+        when Prism::StringNode, Prism::InterpolatedStringNode
+          Resolution.of_core("String")
+        when Prism::SymbolNode
+          Resolution.of_core("Symbol")
         else
           resolve_root(node, context)
         end
@@ -82,7 +94,7 @@ module RubyLsp
         if node.receiver.nil? || node.receiver.is_a?(Prism::SelfNode)
           type = @roots.resolve(node, context)
           return Resolution.of_type(type) if type
-          return Resolution.unknown if node.receiver.nil?
+          return resolve_kernel_member(node) if node.receiver.nil?
         end
 
         receiver = resolve(node.receiver, context)
@@ -90,6 +102,8 @@ module RubyLsp
 
         if receiver.resolved_type?
           resolve_typed_member(node, receiver.type)
+        elsif receiver.core?
+          resolve_core_member(node, receiver.core_type)
         elsif receiver.state_path?
           resolve_state_member(node, receiver.state_path)
         else
@@ -105,10 +119,22 @@ module RubyLsp
         Resolution.unknown
       end
 
+      # Core extensions hang off core types reached through literals, registry
+      # returns, or the `Kernel` receiverless helpers.
+      def resolve_core_member(node, core_type)
+        member = core_extension_member(core_type, node.name)
+        member ? resolution_for(member.returns) : Resolution.unknown
+      end
+
+      def resolve_kernel_member(node)
+        resolve_core_member(node, "Kernel")
+      end
+
       # A known child path wins over a curated entity member of the same name,
       # because the write is what created the path. Argument-free unknown names
       # extend the path even before anything writes them, so completion can
-      # follow a chain that is only written elsewhere.
+      # follow a chain that is only written elsewhere. Core extensions apply
+      # when a state value's inferred type is a core class (REQ-M6-03).
       def resolve_state_member(node, path)
         candidate = "#{path}.#{node.name}"
         member = @registry.entity_type&.member(node.name.to_s)
@@ -119,6 +145,8 @@ module RubyLsp
           resolution_for(member.returns)
         elsif known && plain
           Resolution.of_state(candidate)
+        elsif (extension = state_core_extension_member(path, node.name))
+          resolution_for(extension.returns)
         elsif member
           resolution_for(member.returns)
         elsif plain
@@ -126,6 +154,24 @@ module RubyLsp
         else
           Resolution.unknown
         end
+      end
+
+      # The first curated core extension member matching `name` among the
+      # inferred types of a state path.
+      def state_core_extension_member(path, name)
+        entry = @state_store&.entry(path)
+        return unless entry
+
+        entry.types.each do |type_name|
+          member = core_extension_member(type_name, name)
+          return member if member
+        end
+        nil
+      end
+
+      def core_extension_member(core_type, name)
+        extension = @registry.core_extension_type(core_type)
+        extension&.member(name.to_s)
       end
 
       def plain_call?(node)
@@ -143,7 +189,7 @@ module RubyLsp
 
         name = names.first
         type = @registry.type(name)
-        return Resolution.of_type(type) if type
+        return Resolution.of_type(type) if type && !type.core_extension?
         return Resolution.of_core(name) if @registry.core_type?(name)
 
         Resolution.unknown

@@ -32,6 +32,7 @@ module RubyLsp
         Float
         Hash
         Integer
+        Kernel
         Numeric
         Object
         Proc
@@ -73,6 +74,13 @@ module RubyLsp
 
       def type(name)
         @types[name]
+      end
+
+      # The curated extension type for a core class (`Numeric`, `Hash`, ...),
+      # or nil when DragonRuby does not extend it.
+      def core_extension_type(name)
+        type = @types[name]
+        type if type&.core_extension?
       end
 
       # The type that roots dynamic state paths (`args.state`).

@@ -138,6 +138,7 @@ module RubyLsp
             accepts_primitive: spec["accepts_primitive"],
             open: spec["open"] || false,
             incomplete: spec["incomplete"] || false,
+            core_extension: spec["core_extension"] || false,
             doc: spec["doc"],
             ancestors: ancestors
           )
@@ -154,7 +155,8 @@ module RubyLsp
               returns: Returns.new(raw["returns"]),
               doc: raw["doc"],
               docs_url: raw["docs_url"],
-              aliases: Array(raw["aliases"])
+              aliases: Array(raw["aliases"]),
+              scope: raw["scope"] || :instance
             )
           end
         end

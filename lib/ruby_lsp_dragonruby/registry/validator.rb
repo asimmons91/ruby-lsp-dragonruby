@@ -8,6 +8,7 @@ module RubyLsp
       class Validator
         MEMBER_KINDS = %w[attribute method].freeze
         PARAM_KINDS = %w[required optional keyword rest block].freeze
+        SCOPE_KINDS = %w[instance class both].freeze
 
         Result = Data.define(:issues, :types, :schemas, :macros, :metadata, :name_lists)
 
@@ -229,6 +230,10 @@ module RubyLsp
           end
           spec["open"] = boolean_field(raw, "open", path, default: false)
           spec["incomplete"] = boolean_field(raw, "incomplete", path, default: false)
+          spec["core_extension"] = boolean_field(raw, "core_extension", path, default: false)
+          if spec["core_extension"] && !CORE_TYPES.include?(name)
+            issue(path, "core_extension type `#{name}` must be a core type", :warning)
+          end
 
           accepts = raw["accepts_primitive"]
           if accepts
@@ -325,6 +330,12 @@ module RubyLsp
             params = validate_params(member["params"], path)
             next if params == :invalid
 
+            scope = member["scope"] || "instance"
+            unless SCOPE_KINDS.include?(scope)
+              issue(path, "invalid scope `#{scope}`")
+              next
+            end
+
             candidates << {
               "name" => name,
               "kind" => kind.to_sym,
@@ -333,6 +344,7 @@ module RubyLsp
               "doc" => member["doc"],
               "docs_url" => member["docs_url"],
               "aliases" => member["aliases"],
+              "scope" => scope.to_sym,
               "path" => path
             }
             seen_names[name] = true
