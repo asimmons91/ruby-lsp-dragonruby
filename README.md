@@ -22,7 +22,38 @@ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
 
 ## Usage
 
-TODO: Write usage instructions here
+Add the gem to your project's `Gemfile` and Ruby LSP will pick up the add-on automatically.
+
+### Warnings
+
+Undefined DragonRuby members are always reported in hover (for example,
+`args.inputs.keybaord` shows a warning with a `keyboard` suggestion). To also
+receive them as editor diagnostics, list the add-on's linter identifier in your
+editor's Ruby LSP configuration:
+
+```jsonc
+// initializationOptions
+{
+  "linters": ["dragonruby"]
+}
+```
+
+Diagnostics are delivered through the pull model and use the `dragonruby`
+source. The VS Code extension currently does not expose `linters`, so VS Code
+users get the hover warning only.
+
+Settings live under the add-on name `Ruby LSP DragonRuby`:
+
+| Setting | Default | Description |
+|---|---|---|
+| `warnings.enabled` | `true` | Turns every warning (hover and diagnostics) on or off. |
+| `warnings.primitiveKeys` | `false` | Hint on hash keys in a primitive context that no schema defines. |
+| `warnings.unassignedStateReads` | `false` | Hint on state paths that are read but never written in the workspace. |
+| `warnings.allowlist` | `[]` | Member names and primitive keys that never warn. |
+
+Settings are read when the Ruby LSP server starts; in the pinned `ruby-lsp`
+range there is no configuration-change handler, so changing them requires a
+server restart.
 
 ## Development
 

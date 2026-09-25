@@ -36,9 +36,16 @@ types:
     open: true                 # optional, default false
     incomplete: true           # optional curation flag for M7
     accepts_primitive: sprite  # optional primitive schema name
+    core_backing: Array        # optional core class the type behaves like
     members: [...]             # optional
     generates: [...]           # optional generated families
 ```
+
+`core_backing` names a core type (`Array`, `Hash`, `String`, ...) whose
+standard instance methods the type also responds to. It is inherited from
+ancestors, must name a core type that has a CRuby class to reflect, and is used
+by M7 to suppress undefined-member warnings for methods such as `length` on
+`GTK::Audio` or `size` on the output collections.
 
 A member:
 

@@ -80,10 +80,22 @@ module RubyLsp
         assert content.end_with?("[DragonRuby docs](https://docs.dragonruby.org/#/api/runtime)")
       end
 
-      def test_unknown_member_produces_nothing
-        dispatch_hover("def tick(args)\n  args.nope\nend\n")
+      def test_unknown_member_hover_shows_warning
+        dispatch_hover("def tick(args)\n  args.keybaord\nend\n")
+        content = @builder.response
 
-        assert_predicate @builder, :empty?
+        assert_includes content, "`keybaord` is not a known member of `GTK::Args` in DragonRuby 5.0."
+      end
+
+      def test_unknown_member_warning_can_be_disabled
+        settings = Settings.new("warnings" => {"enabled" => false})
+        context = locate_context("def tick(args)\n  args.keyba‸ord\nend\n", adjust: 0, node_types: [Prism::CallNode])
+        builder = ResponseBuilders::Hover.new
+        dispatcher = Prism::Dispatcher.new
+        Listeners::Hover.new(builder, @registry, context, dispatcher, logger: @logger, settings: settings)
+        dispatcher.dispatch_once(context.node) if context.node
+
+        assert_predicate builder, :empty?
       end
 
       def test_unknown_root_produces_nothing

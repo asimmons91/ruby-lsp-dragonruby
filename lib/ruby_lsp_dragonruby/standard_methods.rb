@@ -28,7 +28,21 @@ module RubyLsp
           klass.respond_to?(name)
         end
 
+        # Methods every Ruby object responds to, so undefined-member warnings
+        # never fire for `inspect`, `class`, `send`, `respond_to?`, and the
+        # like on registry types that have no CRuby counterpart (REQ-M7-01).
+        def standard_object_method?(name)
+          object_method_names.include?(name.to_sym)
+        end
+
         private
+
+        def object_method_names
+          @object_method_names ||= Set.new(
+            Object.instance_methods + Object.private_instance_methods + Object.protected_instance_methods +
+              BasicObject.instance_methods + BasicObject.private_instance_methods + BasicObject.protected_instance_methods
+          )
+        end
 
         def instance_method_names(core_type)
           klass = class_for(core_type)
