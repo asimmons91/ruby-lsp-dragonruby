@@ -157,6 +157,25 @@ module RubyLsp
         refute_includes content, "args → GTK::Args"
       end
 
+      def test_member_hover_through_a_local_alias
+        content = dispatch_last_hover("def tick(args)\n  kb = args.inputs.keyboard\n  kb.key_do‸wn\nend\n")
+
+        assert_includes content, "key_down → GTK::Keys"
+        assert_includes content, "Key down"
+      end
+
+      def test_bare_alias_hover_shows_its_resolved_type
+        content = alias_hover("def tick(args)\n  kb = args.inputs.keyboard\n  k‸b\nend\n")
+
+        assert_includes content, "kb → GTK::Keyboard"
+      end
+
+      def test_bare_alias_hover_after_an_unresolvable_reassignment_produces_nothing
+        content = alias_hover("def tick(args)\n  kb = args.inputs.keyboard\n  kb = nil\n  k‸b\nend\n")
+
+        assert_empty content.to_s
+      end
+
       private
 
       def dispatch_hover(source)
@@ -164,6 +183,26 @@ module RubyLsp
         first = statements.first
         node = first.is_a?(Prism::DefNode) ? first.body.body.first : statements.first
         @dispatcher.dispatch_once(node)
+      end
+
+      def dispatch_last_hover(source)
+        context = locate_context(source, adjust: 0, node_types: [Prism::CallNode])
+        builder = ResponseBuilders::Hover.new
+        dispatcher = Prism::Dispatcher.new
+        Listeners::Hover.new(builder, @registry, context, dispatcher, logger: @logger)
+        dispatcher.dispatch_once(context.node) if context.node
+
+        builder.response
+      end
+
+      def alias_hover(source)
+        builder = ResponseBuilders::Hover.new
+        dispatcher = Prism::Dispatcher.new
+        context = locate_context(source, adjust: 0, node_types: [Prism::LocalVariableReadNode])
+        Listeners::Hover.new(builder, @registry, context, dispatcher, logger: @logger)
+        dispatcher.dispatch_once(context.node) if context.node
+
+        builder.response
       end
 
       def primitive_hover(source)

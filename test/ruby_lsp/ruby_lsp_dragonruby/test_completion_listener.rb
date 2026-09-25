@@ -216,6 +216,69 @@ module RubyLsp
         assert_empty items
       end
 
+      def test_primitive_context_through_a_local_alias
+        items = dispatch_primitive("def tick(args)\n  sprites = args.outputs.sprites\n  sprites << {‸\nend\n")
+
+        assert_includes items.map(&:label), "path"
+      end
+
+      def test_primitive_context_after_reassignment_uses_the_new_alias
+        items = dispatch_primitive(<<~RUBY)
+          def tick(args)
+            collection = args.outputs.labels
+            collection = args.outputs.sprites
+            collection << {‸
+          end
+        RUBY
+        labels = items.map(&:label)
+
+        assert_includes labels, "path"
+        refute_includes labels, "text"
+      end
+
+      def test_completion_through_a_local_alias
+        labels = dispatch_at("def tick(args)\n  kb = args.inputs.keyboard\n  kb.‸\nend\n").map(&:label)
+
+        assert_includes labels, "a"
+        assert_includes labels, "key_down"
+      end
+
+      def test_completion_through_chained_aliases
+        source = "def tick(args)\n  i = args.inputs\n  kb = i.keyboard\n  kb.‸\nend\n"
+
+        assert_includes dispatch_at(source).map(&:label), "key_down"
+      end
+
+      def test_completion_after_reassignment_to_an_unresolvable_expression
+        items = dispatch_at("def tick(args)\n  kb = args.inputs.keyboard\n  kb = nil\n  kb.‸\nend\n")
+
+        assert_empty items
+      end
+
+      def test_completion_inside_a_block_sees_an_outer_alias
+        source = "def tick(args)\n  kb = args.inputs.keyboard\n  [1].each { kb.‸ }\nend\n"
+
+        assert_includes dispatch_at(source).map(&:label), "key_down"
+      end
+
+      def test_completion_with_numbered_parameters_in_the_scope
+        source = "def tick(args)\n  kb = args.inputs.keyboard\n  [1].each { _1; kb.‸ }\nend\n"
+
+        assert_includes dispatch_at(source).map(&:label), "key_down"
+      end
+
+      def test_block_local_aliases_do_not_leak_out
+        items = dispatch_at("def tick(args)\n  [1].each { kb = args.inputs.keyboard }\n  kb.‸\nend\n")
+
+        assert_empty items
+      end
+
+      def test_block_parameters_shadow_outer_aliases
+        source = "def tick(args)\n  kb = args.inputs.keyboard\n  [1].each { |kb| kb.‸ }\nend\n"
+
+        assert_empty dispatch_at(source)
+      end
+
       private
 
       def dispatch(source)
@@ -224,6 +287,22 @@ module RubyLsp
         node = first.is_a?(Prism::DefNode) ? first.body.body.first : statements.last
         @dispatcher.dispatch_once(node)
         @builder.response
+      end
+
+      def dispatch_at(source, registry: @registry)
+        builder = ResponseBuilders::CollectionResponseBuilder.new
+        dispatcher = Prism::Dispatcher.new
+        context = locate_context(source)
+        Listeners::Completion.new(
+          builder,
+          registry,
+          context,
+          dispatcher,
+          URI("file:///test.rb"),
+          logger: @logger
+        )
+        dispatcher.dispatch_once(context.node) if context.node
+        builder.response
       end
 
       def dispatch_primitive(source)
