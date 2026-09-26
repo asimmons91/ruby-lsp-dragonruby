@@ -87,7 +87,7 @@ areas:
     title: "CVars / Configuration (args.cvars)"
     docs: "https://docs.dragonruby.org/#/api/cvars"
     deferred: "Keys come from the game's metadata files, not a fixed engine API, so there is no stable completion surface to curate."
-  - id: args.pixel_arrays
+  - id: args.pixel_array
     title: "Pixel Arrays (args.pixel_array)"
     docs: "https://docs.dragonruby.org/#/api/pixel_arrays"
     deferred: "Pixel arrays are keyed by runtime symbols on args.pixel_array, which is dynamic receiver syntax the args-tree resolver does not model."

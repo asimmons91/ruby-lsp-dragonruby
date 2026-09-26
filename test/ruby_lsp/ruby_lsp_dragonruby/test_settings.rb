@@ -74,12 +74,20 @@ module RubyLsp
         refute settings.enabled?
       end
 
-      def test_from_reads_the_addon_entry
+      def test_from_reads_the_settings_entry
+        global_state = FakeGlobalState.new(
+          {Settings::SETTINGS_KEY => {"warnings" => {"enabled" => false}}}
+        )
+
+        refute Settings.from(global_state).enabled?
+      end
+
+      def test_from_ignores_the_addon_name_entry
         global_state = FakeGlobalState.new(
           {Settings::ADDON_NAME => {"warnings" => {"enabled" => false}}}
         )
 
-        refute Settings.from(global_state).enabled?
+        assert Settings.from(global_state).enabled?
       end
     end
   end

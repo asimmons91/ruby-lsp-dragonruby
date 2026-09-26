@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. Every release states the
 DragonRuby version its registry targets.
 
+## [Unreleased]
+
+- The settings key under `initializationOptions.addonSettings` is now
+  `rubyLspDragonruby`; the add-on name reported by Ruby LSP is unchanged.
+
 ## [1.0.0] - 2026-09-25
 
 Targets DragonRuby 7.18.

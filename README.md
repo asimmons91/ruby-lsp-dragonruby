@@ -1,10 +1,54 @@
 # ruby-lsp-dragonruby
 
-Ruby LSP add-on for [DragonRuby Game Toolkit](https://dragonruby.org/) projects. It
-teaches Ruby LSP about DragonRuby's `args` API so editors get completion, hover,
-go-to-definition, and warnings inside game code.
+Editor intelligence for [DragonRuby Game Toolkit](https://dragonruby.org/) projects.
 
-The add-on runs on CRuby inside Ruby LSP; it never runs inside DragonRuby itself.
+This is a [Ruby LSP](https://github.com/Shopify/ruby-lsp) add-on that teaches Ruby LSP
+about DragonRuby's `args` API, so your editor gets completion, hover,
+go-to-definition, and warnings inside your game code.
+
+The add-on runs on CRuby inside Ruby LSP. It is never loaded by DragonRuby itself, so
+it has no effect on your game at runtime.
+
+## Requirements
+
+| Component | Supported |
+|---|---|
+| Ruby (editor process) | 3.2+ (CI runs 3.4 and 4.0) |
+| Ruby LSP | `~> 0.26.0` (CI runs the lowest and newest 0.26.x) |
+| DragonRuby | the curated registry targets **DragonRuby 7.18** |
+
+The registry tracks the latest DragonRuby release. A new DragonRuby version is
+supported once this gem ships a release that targets it.
+
+## Installation
+
+`ruby-lsp-dragonruby` is not on RubyGems yet. Add it to your game's `Gemfile` from
+GitHub, in the development group:
+
+```ruby
+group :development do
+  gem "ruby-lsp-dragonruby",
+    github: "asimmons91/ruby-lsp-dragonruby",
+    require: false
+end
+```
+
+Install it and restart Ruby LSP (or your editor):
+
+```bash
+bundle install
+```
+
+Once the gem is published, the dependency becomes:
+
+```ruby
+gem "ruby-lsp-dragonruby", require: false
+```
+
+No further configuration is required for completion, hover, and go-to-definition.
+Open a game file and type `args.` to confirm the add-on is active. Because the gem is
+in the `:development` group and required with `require: false`, DragonRuby never loads
+it at runtime.
 
 ## Features
 
@@ -12,71 +56,69 @@ The add-on runs on CRuby inside Ruby LSP; it never runs inside DragonRuby itself
   `args.outputs`, `args.grid`, `args.geometry`, `args.easing`, `args.audio`, `args.gtk`,
   `args.layout`, `args.events`, and `args.state`, including half-typed chains.
 - **`args.state` tracking** — completion, hover, and go-to-definition for state paths
-  written anywhere in the workspace, with inferred value types.
+  written anywhere in the workspace, with inferred value types. A key written in
+  `app/player.rb` is offered in `app/main.rb`.
 - **Local aliases** — types flow through locals such as `kb = args.inputs.keyboard`.
-- **Primitive hash keys** — key completion, allowed-value completion, and hover inside
+- **Primitive hashes** — key completion, allowed-value completion, and hover inside
   sprite, label, solid, border, line, and screenshot hashes, driven by curated schemas.
 - **Class macros** — `attr_gtk` accessors and `attr_sprite` sprite keys are registered
   for any class that calls them.
 - **Core-class extensions** — DragonRuby's additions to `Numeric`, `Integer`, `Float`,
-  `Array`, `Hash`, and `Kernel` are offered on literal and inferred receivers.
+  `Array`, `Hash`, and `Kernel` are offered on literal and inferred receivers, labeled
+  as DragonRuby additions.
 - **Undefined-API warnings** — hovering an unknown member of a confidently resolved
   type shows a warning with a "Did you mean ...?" suggestion when a close match exists.
-
-## Requirements
-
-| Component | Supported |
-|---|---|
-| Ruby | 3.2+ (CI runs 3.4 and 4.0) |
-| Ruby LSP | `~> 0.26.0` (CI runs the lowest and newest 0.26.x) |
-| DragonRuby | the curated registry targets **DragonRuby 7.18** |
-
-The targeted DragonRuby version is recorded in `data/metadata.yml` and printed by
-`bundle exec rake registry:coverage`.
-
-## Installation
-
-Add the add-on to your game's `Gemfile`, in the development group:
+  Warnings can also be delivered as editor diagnostics (see below).
 
 ```ruby
-group :development do
-  gem "ruby-lsp-dragonruby", require: false
+def tick(args)
+  kb = args.inputs.keyboard
+  kb.key_down?(:space) # aliases keep their DragonRuby type
+
+  args.outputs.sprites << { x: 0, y: 0, w: 32, h: 32, path: "player.png" }
+  #                         ^ completes sprite keys and validates allowed values
+
+  args.state.player.x ||= 0 # tracked across the whole workspace
 end
 ```
 
-Then install it:
+## Configuration
 
-```bash
-bundle install
-```
-
-Restart Ruby LSP (or your editor) and the add-on activates automatically. No
-configuration is required for completion, hover, and go-to-definition.
-
-The add-on works when the gem is only in the `:development` group, so it is never
-loaded by DragonRuby at runtime.
-
-## Warnings and diagnostics
-
-Undefined DragonRuby members are always reported in hover (for example,
-`args.inputs.keybaord` shows a warning with a `keyboard` suggestion). To also
-receive them as editor diagnostics, list the add-on's linter identifier in your
-editor's Ruby LSP configuration:
+Hovering an unknown member always shows a warning. To also receive warnings as editor
+diagnostics, list the add-on's linter identifier in Ruby LSP's initialization options:
 
 ```jsonc
-// initializationOptions
 {
-  "linters": ["dragonruby"]
+  "initializationOptions": {
+    "linters": ["dragonruby"]
+  }
 }
 ```
 
-Diagnostics are delivered through the pull model and use the `dragonruby` source.
-The VS Code extension currently does not expose `linters`, so VS Code users get
-the hover warning only.
+Diagnostics use the pull model, the `dragonruby` source, and update as you edit. They
+compose with other linters, such as RuboCop. The VS Code extension (0.5.x) does not
+expose `linters`, so VS Code users get the hover warning only.
 
 ### Settings
 
-Settings live under the add-on name `Ruby LSP DragonRuby`:
+Add-on settings live under the `rubyLspDragonruby` key:
+
+```jsonc
+{
+  "initializationOptions": {
+    "addonSettings": {
+      "rubyLspDragonruby": {
+        "warnings": {
+          "enabled": true,
+          "primitiveKeys": false,
+          "unassignedStateReads": false,
+          "allowlist": []
+        }
+      }
+    }
+  }
+}
+```
 
 | Setting | Default | Description |
 |---|---|---|
@@ -85,9 +127,9 @@ Settings live under the add-on name `Ruby LSP DragonRuby`:
 | `warnings.unassignedStateReads` | `false` | Hint on state paths that are read but never written in the workspace. |
 | `warnings.allowlist` | `[]` | Member names and primitive keys that never warn. |
 
-Settings are read when the Ruby LSP server starts. In the pinned `ruby-lsp` range
-there is no configuration-change handler, so changing them requires a server
-restart.
+Settings are read when the Ruby LSP server starts. In the pinned `ruby-lsp` range there
+is no configuration-change handler, so changing them requires a server restart. The
+VS Code extension (0.5.x) does not currently send add-on settings either.
 
 ## Known limitations
 
@@ -96,39 +138,28 @@ restart.
   on members reached through an alias works.
 - Completion inside a primitive hash needs at least one key character typed; Ruby LSP
   discards completion targets that sit in trailing whitespace (the common `{ x: 0, |`).
-- Settings need a server restart (see above), and the VS Code extension does not send
-  `linters` or add-on settings.
 - Go-to-definition is provided for `args.state` paths only.
-- The registry targets the latest DragonRuby release only. Where the documentation does
-  not name the underlying class, provisional names such as `GTK::Outputs::Sprites` are
-  used.
+- The registry targets the latest DragonRuby release only. Where the documentation
+  does not name the underlying class, provisional names such as `GTK::Outputs::Sprites`
+  are used.
 - `args.cvars`, `args.pixel_array`, and `Zlib` are documented DragonRuby APIs that are
-  intentionally deferred; `rake registry:coverage` lists them with reasons.
+  intentionally deferred; `bundle exec rake registry:coverage` lists them with reasons.
+- Settings require a server restart, and VS Code does not send `linters` or add-on
+  settings (see [Configuration](#configuration)).
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. The full gate is:
+After checking out the repo, run `bin/setup` to install dependencies. The full gate,
+which runs the tests, linting, registry validation and coverage, and the performance
+benchmarks, is:
 
 ```bash
 bundle exec rake
 ```
 
-which runs the tests (including the fuzz sweep), `standard` linting, registry
-validation and coverage, and the performance benchmarks. Individual commands:
-
-```bash
-bundle exec rake test          # test suite
-bundle exec rake standard      # lint / format check
-bundle exec rake registry:validate
-bundle exec rake registry:coverage
-bundle exec rake benchmark     # enforces REQ-PERF-02 and REQ-PERF-03
-```
-
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the registry data format, how to add or
-update entries, and the procedure for a new DragonRuby release.
-
-To experiment in an IRB session, run `bin/console`. To build and install the gem
-locally, run `bundle exec rake install`.
+update entries, and the release process. To experiment in an IRB session, run
+`bin/console`.
 
 ## Contributing
 
