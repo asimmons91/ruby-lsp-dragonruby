@@ -156,14 +156,15 @@ module RubyLsp
         # every other node type the add-on handles. Capped and spread evenly so
         # the benchmark stays quick.
         def sample_positions
+          cache = @document.code_units_cache
           offsets = []
           each_node(@document.ast) do |node|
             case node
             when Prism::CallNode
-              offsets << node.message_loc.start_offset if node.message_loc
+              offsets << node.message_loc.cached_start_code_units_offset(cache) if node.message_loc
             when Prism::SymbolNode, Prism::StringNode, Prism::GlobalVariableReadNode,
               Prism::LocalVariableReadNode, Prism::ConstantReadNode, Prism::ConstantPathNode
-              offsets << node.location.start_offset
+              offsets << node.location.cached_start_code_units_offset(cache)
             end
           end
 

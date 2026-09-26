@@ -40,6 +40,8 @@ module RubyLsp
               macro = registry.macro(name)
               macro.nil? || macro.accessors.empty?
             end
+            deferred = raw["deferred"]&.to_s
+            deferred = nil if deferred&.strip&.empty?
 
             Area.new(
               id: raw["id"],
@@ -52,7 +54,7 @@ module RubyLsp
               missing_schemas: missing_schemas,
               macros: macros,
               missing_macros: missing_macros,
-              deferred: raw["deferred"]&.to_s
+              deferred: deferred
             )
           end
 

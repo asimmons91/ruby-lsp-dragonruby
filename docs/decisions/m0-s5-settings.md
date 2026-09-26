@@ -41,3 +41,10 @@ extension 0.5.x.
   `didChangeConfiguration` bridge would take effect without further changes.
 - No settings UI is added by this gem; the keys and the linter identifier are
   documented in the README.
+
+## Update (2026-09-25)
+
+The settings key is now `rubyLspDragonruby`, matching editor configuration
+conventions and decoupled from the add-on's display name. `Settings.from` looks
+up `settings_for_addon(Settings::SETTINGS_KEY)`; `Addon#name` and the name
+shown in Ruby LSP's add-on list remain `Ruby LSP DragonRuby`.

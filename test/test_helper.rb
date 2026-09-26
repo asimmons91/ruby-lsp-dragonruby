@@ -426,7 +426,7 @@ module ServerTestHelper
   def configure_addon(server, settings: nil, linters: nil)
     options = {}
     options[:linters] = linters if linters
-    options[:addonSettings] = {RubyLsp::Dragonruby::Settings::ADDON_NAME => settings} if settings
+    options[:addonSettings] = {RubyLsp::Dragonruby::Settings::SETTINGS_KEY => settings} if settings
     server.global_state.apply_options({initializationOptions: options})
   end
 

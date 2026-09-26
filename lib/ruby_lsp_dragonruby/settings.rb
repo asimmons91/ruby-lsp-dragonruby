@@ -13,8 +13,10 @@ module RubyLsp
 
       ADDON_NAME = "Ruby LSP DragonRuby"
 
+      SETTINGS_KEY = "rubyLspDragonruby"
+
       def self.from(global_state)
-        new(global_state&.settings_for_addon(ADDON_NAME))
+        new(global_state&.settings_for_addon(SETTINGS_KEY))
       end
 
       def initialize(raw = nil)
